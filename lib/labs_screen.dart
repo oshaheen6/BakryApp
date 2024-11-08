@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LabsScreen extends StatefulWidget {
+  final String patientId;
+
+  LabsScreen({required this.patientId});
+
   @override
   _LabsScreenState createState() => _LabsScreenState();
 }
@@ -30,7 +35,8 @@ class _LabsScreenState extends State<LabsScreen> {
   bool isCritical = false;
   String? comment;
 
-  // Function to determine card color
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   Color getCardColor() {
     if (isCritical) {
       return comment != null && comment!.isNotEmpty
@@ -42,12 +48,35 @@ class _LabsScreenState extends State<LabsScreen> {
     return Colors.grey.shade200;
   }
 
-  // Function to check if result is within the normal range
   bool isInNormalRange() {
     if (selectedTest == null || result == null) return false;
     final range =
         labTests.firstWhere((test) => test['name'] == selectedTest)['range'];
     return result! >= range[0] && result! <= range[1];
+  }
+
+  // Method to save the lab result to Firestore
+  void _saveLabResult() {
+    if (selectedTest != null && result != null) {
+      _firestore
+          .collection('patients')
+          .doc(widget.patientId)
+          .collection('labs')
+          .add({
+        'testName': selectedTest,
+        'result': result,
+        'isCritical': isCritical,
+        'comment': comment ?? '',
+        'dateCreated': DateTime.now().toString(),
+      });
+      // Optionally, reset fields after saving
+      setState(() {
+        selectedTest = null;
+        result = null;
+        isCritical = false;
+        comment = null;
+      });
+    }
   }
 
   @override
@@ -111,14 +140,19 @@ class _LabsScreenState extends State<LabsScreen> {
                   },
                 ),
               const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saveLabResult,
+                child: const Text('Save Result'),
+              ),
+              const SizedBox(height: 20),
               Card(
                 color: getCardColor(),
                 child: ListTile(
                   title: Text("Lab Test: $selectedTest"),
                   subtitle: Text("Result: ${result ?? ''}"),
                   trailing: isCritical
-                      ? const Icon(Icons.warning, color: Colors.red)
-                      : const Icon(Icons.check, color: Colors.green),
+                      ? Icon(Icons.warning, color: Colors.red)
+                      : Icon(Icons.check, color: Colors.green),
                 ),
               ),
             ],
