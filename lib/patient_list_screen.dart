@@ -2,12 +2,22 @@ import 'package:bakryapp/all_medication.dart';
 import 'package:bakryapp/discharge_patients.dart';
 import 'package:bakryapp/labs_screen.dart';
 import 'package:bakryapp/notes_todo_screen.dart';
+import 'package:bakryapp/tpn_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PatientListScreen extends StatelessWidget {
   final CollectionReference patientsRef =
       FirebaseFirestore.instance.collection('patients');
+
+  Future<bool> checkForTpnParameters(String patientId) async {
+    final tpnRef = FirebaseFirestore.instance
+        .collection('patients')
+        .doc(patientId)
+        .collection('tpnParameters');
+    final tpnSnapshot = await tpnRef.get();
+    return tpnSnapshot.docs.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +119,33 @@ class PatientListScreen extends StatelessWidget {
                             },
                             icon: const Icon(Icons.notes_outlined),
                             label: const Text('Notes & Todo'),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              bool hasTpn =
+                                  await checkForTpnParameters(patientId);
+                              if (hasTpn) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        TpnScreen(patientId: patientId),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'No TPN data available for this patient.')),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.medical_services_outlined),
+                            label: const Text('TPN'),
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
