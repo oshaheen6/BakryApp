@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
     authDomain: 'bakryexcel.firebaseapp.com',
-    storageBucket: 'bakryexcel.appspot.com',
+    storageBucket: 'bakryexcel.firebasestorage.app',
     measurementId: 'G-3TX2R9QWTV',
   );
 
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:789996709547:android:25c38bd3f75a2ce517f9ee',
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
-    storageBucket: 'bakryexcel.appspot.com',
+    storageBucket: 'bakryexcel.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:789996709547:ios:f2c3e4a88ac7da6617f9ee',
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
-    storageBucket: 'bakryexcel.appspot.com',
+    storageBucket: 'bakryexcel.firebasestorage.app',
     iosBundleId: 'com.example.bakryapp',
   );
 
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     appId: '1:789996709547:ios:f2c3e4a88ac7da6617f9ee',
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
-    storageBucket: 'bakryexcel.appspot.com',
+    storageBucket: 'bakryexcel.firebasestorage.app',
     iosBundleId: 'com.example.bakryapp',
   );
 
@@ -82,7 +82,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
     authDomain: 'bakryexcel.firebaseapp.com',
-    storageBucket: 'bakryexcel.appspot.com',
+    storageBucket: 'bakryexcel.firebasestorage.app',
     measurementId: 'G-5TE7ZH3MH6',
   );
 
