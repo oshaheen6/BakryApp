@@ -7,11 +7,17 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PatientListScreen extends StatelessWidget {
-  final CollectionReference patientsRef =
-      FirebaseFirestore.instance.collection('patients');
+  final String department;
+  PatientListScreen({required this.department});
+  final CollectionReference patientsRef = FirebaseFirestore.instance
+      .collection('departments')
+      .doc('NICU')
+      .collection('patients');
 
   Future<bool> checkForTpnParameters(String patientId) async {
     final tpnRef = FirebaseFirestore.instance
+        .collection('departments')
+        .doc(department)
         .collection('patients')
         .doc(patientId)
         .collection('tpnParameters');
