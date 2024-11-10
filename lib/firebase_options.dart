@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBrlgmgGUNXWMvWRawl-7E3yU1RPt9FSPo',
-    appId: '1:789996709547:android:25c38bd3f75a2ce517f9ee',
+    appId: '1:789996709547:android:0b808d8ec3369ad517f9ee',
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
     storageBucket: 'bakryexcel.firebasestorage.app',
