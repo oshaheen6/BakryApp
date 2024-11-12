@@ -9,9 +9,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PatientListScreen extends StatelessWidget {
   final String department;
   PatientListScreen({required this.department});
-  final CollectionReference patientsRef = FirebaseFirestore.instance
+
+  CollectionReference get patientsRef => FirebaseFirestore.instance
       .collection('departments')
-      .doc('NICU')
+      .doc(department)
       .collection('patients');
 
   Future<bool> checkForTpnParameters(String patientId) async {
@@ -29,7 +30,7 @@ class PatientListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Current Patients'),
+        title: Text('Current Patients in $department'),
         actions: [
           IconButton(
             icon: const Icon(Icons.archive_outlined, color: Colors.white),
