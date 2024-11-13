@@ -1,19 +1,26 @@
 import 'package:bakryapp/department_screen.dart';
+import 'package:bakryapp/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Duration get loginTime => Duration(milliseconds: 2250);
 
-  Future<String?> _loginUser(LoginData data) async {
+  Future<String?> _loginUser(BuildContext context, LoginData data) async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: data.name,
         password: data.password,
       );
+
+      // Save the username in UserProvider
+      Provider.of<UserProvider>(context, listen: false)
+          .setUsername(userCredential.user?.email ?? '');
+
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
@@ -46,7 +53,7 @@ class LoginScreen extends StatelessWidget {
     return FlutterLogin(
       title: 'Bakry App',
       logo: AssetImage('assets/logo.png'),
-      onLogin: _loginUser,
+      onLogin: (loginData) => _loginUser(context, loginData),
       onSignup: _registerUser,
       onRecoverPassword: _recoverPassword,
       onSubmitAnimationCompleted: () {

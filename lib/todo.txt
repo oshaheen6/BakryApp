@@ -1,2 +1,4 @@
-what i want to do
-        
+access username
+final username = Provider.of<UserProvider>(context).username;
+
+

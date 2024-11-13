@@ -345,7 +345,7 @@ class CommentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return const SizedBox(
       width: double.maxFinite,
       child: Column(
         children: [
