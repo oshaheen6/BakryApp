@@ -1,5 +1,7 @@
+import 'package:bakryapp/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:bakryapp/patient_list_screen.dart';
+import 'package:provider/provider.dart';
 
 class DepartmentSelectionScreen extends StatelessWidget {
   @override
@@ -20,6 +22,8 @@ class DepartmentSelectionScreen extends StatelessWidget {
                 title: 'NICU',
                 color: Colors.blueAccent,
                 onPressed: () {
+                  Provider.of<UserProvider>(context, listen: false)
+                      .setDepartment('NICU');
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -36,6 +40,8 @@ class DepartmentSelectionScreen extends StatelessWidget {
                 title: 'PICU',
                 color: Colors.teal,
                 onPressed: () {
+                  Provider.of<UserProvider>(context, listen: false)
+                      .setDepartment('PICU');
                   Navigator.push(
                     context,
                     MaterialPageRoute(

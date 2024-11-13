@@ -2,3 +2,4 @@ access username
 final username = Provider.of<UserProvider>(context).username;
 
 
+Provider.of<UserProvider>(context, listen: false).setDepartment('NICU');
