@@ -7,10 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PatientListScreen extends StatelessWidget {
-  final String department;
-  PatientListScreen({required this.department});
+  @override
+  Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final department = userProvider.department;
 
-  CollectionReference get patientsRef => FirebaseFirestore.instance
+    final CollectionReference patientsRef = FirebaseFirestore.instance
       .collection('departments')
       .doc(department)
       .collection('patients');
