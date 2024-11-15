@@ -1,5 +1,7 @@
+import 'package:bakryapp/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 class LabsScreen extends StatefulWidget {
   final String patientId;
@@ -33,12 +35,6 @@ class _LabsScreenState extends State<LabsScreen> {
   @override
   void initState() {
     super.initState();
-    labsRef = FirebaseFirestore.instance
-        .collection('departments')
-        .doc('NICU') // Adjust to be dynamic if needed
-        .collection('patients')
-        .doc(widget.patientId)
-        .collection('labs');
   }
 
   Future<void> _showLabTestSelection() async {
@@ -147,6 +143,16 @@ class _LabsScreenState extends State<LabsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final department = userProvider.department;
+
+    labsRef = FirebaseFirestore.instance
+        .collection('departments')
+        .doc(department) // Adjust to be dynamic if needed
+        .collection('patients')
+        .doc(widget.patientId)
+        .collection('labs');
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lab Results'),
