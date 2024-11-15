@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -20,6 +21,13 @@ class LoginScreen extends StatelessWidget {
       // Save the username in UserProvider
       Provider.of<UserProvider>(context, listen: false)
           .setUsername(userCredential.user?.email ?? '');
+
+      // Save login status and username in SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setInt(
+          'loginTimestamp', DateTime.now().millisecondsSinceEpoch);
+      await prefs.setString('username', userCredential.user?.email ?? '');
 
       return null;
     } on FirebaseAuthException catch (e) {
@@ -52,7 +60,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return FlutterLogin(
       title: 'Bakry App',
-      logo: AssetImage('assets/logo.png'),
+      logo: const AssetImage('assets/images/final 1.png'),
       onLogin: (loginData) => _loginUser(context, loginData),
       onSignup: _registerUser,
       onRecoverPassword: _recoverPassword,

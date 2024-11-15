@@ -1,10 +1,12 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bakryapp/all_medication.dart';
 import 'package:bakryapp/discharge_patients.dart';
 import 'package:bakryapp/labs_screen.dart';
 import 'package:bakryapp/notes_todo_screen.dart';
 import 'package:bakryapp/tpn_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '/provider/user_provider.dart';
 
 class PatientListScreen extends StatelessWidget {
   @override
@@ -13,23 +15,21 @@ class PatientListScreen extends StatelessWidget {
     final department = userProvider.department;
 
     final CollectionReference patientsRef = FirebaseFirestore.instance
-      .collection('departments')
-      .doc(department)
-      .collection('patients');
-
-  Future<bool> checkForTpnParameters(String patientId) async {
-    final tpnRef = FirebaseFirestore.instance
         .collection('departments')
         .doc(department)
-        .collection('patients')
-        .doc(patientId)
-        .collection('tpnParameters');
-    final tpnSnapshot = await tpnRef.get();
-    return tpnSnapshot.docs.isNotEmpty;
-  }
+        .collection('patients');
 
-  @override
-  Widget build(BuildContext context) {
+    Future<bool> checkForTpnParameters(String patientId) async {
+      final tpnRef = FirebaseFirestore.instance
+          .collection('departments')
+          .doc(department)
+          .collection('patients')
+          .doc(patientId)
+          .collection('tpnParameters');
+      final tpnSnapshot = await tpnRef.get();
+      return tpnSnapshot.docs.isNotEmpty;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Current Patients in $department'),
@@ -147,7 +147,7 @@ class PatientListScreen extends StatelessWidget {
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                       content: Text(
                                           'No TPN data available for this patient.')),
                                 );
@@ -181,38 +181,53 @@ class PatientListScreen extends StatelessWidget {
                             List<QueryDocumentSnapshot> medications =
                                 medSnapshot.data!.docs;
 
-                            // Count occurrences of each drugName
-                            final medicationCount = <String, int>{};
-                            for (var medDoc in medications) {
-                              final drugName = medDoc['drugName'];
-                              medicationCount[drugName] =
-                                  (medicationCount[drugName] ?? 0) + 1;
-                            }
-
                             return Column(
                               children: medications.map((medDoc) {
-                                final drugName = medDoc['drugName'];
-                                final dose = medDoc['dose(number)'];
-                                final doseUnit = medDoc['dose(unit)'];
-                                final regimen = medDoc['regimen'];
-                                final amounts = medDoc['amounts'];
-                                final count = medicationCount[drugName] ?? 0;
+                                return StreamBuilder(
+                                  stream: medDoc.reference
+                                      .collection('daily_entries')
+                                      .orderBy('date', descending: true)
+                                      .limit(1)
+                                      .snapshots(),
+                                  builder: (context,
+                                      AsyncSnapshot<QuerySnapshot>
+                                          dailySnapshot) {
+                                    if (dailySnapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const CircularProgressIndicator();
+                                    } else if (dailySnapshot.hasData &&
+                                        dailySnapshot.data!.docs.isNotEmpty) {
+                                      final dailyEntry =
+                                          dailySnapshot.data!.docs.first;
+                                      final drugName = medDoc.id;
+                                      final dose = dailyEntry['dose(number)'];
+                                      final doseUnit = dailyEntry['dose(unit)'];
+                                      final regimen = dailyEntry['regimen'];
+                                      final amounts = dailyEntry['amounts'];
 
-                                return ListTile(
-                                  title: Text(
-                                    drugName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                      'Dose: $dose $doseUnit, ($amounts ml) every: $regimen'),
-                                  trailing: Text(
-                                    'no. of days: $count',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
+                                      return ListTile(
+                                        title: Text(
+                                          drugName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                            'Dose: $dose $doseUnit, ($amounts ml) every: $regimen'),
+                                        trailing: Text(
+                                          'no. of days: $count',
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
+                                        ),
+                                      );
+                                    } else {
+                                      return const Center(
+                                          child: Text(
+                                              'No current medication data available.'));
+                                    }
+                                  },
                                 );
-                              }).toList(),
+                              }).toList(), // Convert the mapped iterable to a list
                             );
                           } else {
                             return const Center(

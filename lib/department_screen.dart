@@ -27,8 +27,7 @@ class DepartmentSelectionScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          PatientListScreen(department: 'NICU'),
+                      builder: (context) => PatientListScreen(),
                     ),
                   );
                 },
@@ -45,8 +44,7 @@ class DepartmentSelectionScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          PatientListScreen(department: 'PICU'),
+                      builder: (context) => PatientListScreen(),
                     ),
                   );
                 },
