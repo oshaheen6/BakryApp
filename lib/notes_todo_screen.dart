@@ -1,10 +1,12 @@
+import 'package:bakryapp/comment_section.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NotesTodoScreen extends StatelessWidget {
+  final String theDepartment;
   final String patientId;
 
-  NotesTodoScreen({required this.patientId});
+  NotesTodoScreen({required this.theDepartment, required this.patientId});
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -60,6 +62,8 @@ class NotesTodoScreen extends StatelessWidget {
   Widget _buildNotesList(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
+          .collection('departments')
+          .doc(theDepartment)
           .collection('patients')
           .doc(patientId)
           .collection('notes')
@@ -97,7 +101,7 @@ class NotesTodoScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              note['noteContent'], // Access the 'noteContent' field directly
+              note['noteContent'],
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             Text(
@@ -110,9 +114,8 @@ class NotesTodoScreen extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.thumb_up),
                   color: Colors.blue,
-                  onPressed: () => _toggleLike(note),
+                  onPressed: () => _toggleLike(note, 'notes'),
                 ),
-                // Updated likes display to handle absence of 'likes' field
                 Text(
                   '${(note.data() as Map<String, dynamic>)['likes'] ?? 0} likes',
                 ),
@@ -133,6 +136,8 @@ class NotesTodoScreen extends StatelessWidget {
   Widget _buildTodosList(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
+          .collection('departments')
+          .doc(theDepartment)
           .collection('patients')
           .doc(patientId)
           .collection('todos')
@@ -184,9 +189,8 @@ class NotesTodoScreen extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.thumb_up),
                   color: Colors.blue,
-                  onPressed: () => _toggleLike(todo),
+                  onPressed: () => _toggleLike(todo, 'todos'),
                 ),
-                // Using the null-aware operator to avoid 'containsKey'
                 Text(
                   '${todo['likes'] ?? 0} likes',
                 ),
@@ -204,17 +208,19 @@ class NotesTodoScreen extends StatelessWidget {
     );
   }
 
-  void _toggleLike(QueryDocumentSnapshot doc) async {
+  void _toggleLike(QueryDocumentSnapshot doc, String collectionName) async {
     final docRef = _firestore
+        .collection('departments')
+        .doc(theDepartment)
         .collection('patients')
         .doc(patientId)
-        .collection(doc.reference.parent.id)
+        .collection(collectionName)
         .doc(doc.id);
 
     await docRef.get().then((docSnapshot) {
       if (docSnapshot.exists) {
         final data = docSnapshot.data() as Map<String, dynamic>;
-        final likes = data['likes'] ?? 0; // Default to 0 if 'likes' is missing
+        final likes = data['likes'] ?? 0;
         docRef.update({'likes': likes + 1});
       }
     });
@@ -305,7 +311,10 @@ class NotesTodoScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Comments'),
         content: CommentsSection(
-            patientId: patientId, docId: docId, collectionName: collectionName),
+            department: theDepartment,
+            patientId: patientId,
+            docId: docId,
+            collectionName: collectionName),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -317,41 +326,31 @@ class NotesTodoScreen extends StatelessWidget {
   }
 
   void _addNoteToFirestore(String noteContent) {
-    _firestore.collection('patients').doc(patientId).collection('notes').add({
+    _firestore
+        .collection('departments')
+        .doc(theDepartment)
+        .collection('patients')
+        .doc(patientId)
+        .collection('notes')
+        .add({
       'noteContent': noteContent,
       'dateCreated': DateTime.now().toIso8601String(),
-      'likes': 0, // Ensure 'likes' field is always set
+      'likes': 0,
     });
   }
 
   void _addTodoToFirestore(String todoContent) {
-    _firestore.collection('patients').doc(patientId).collection('todos').add({
+    _firestore
+        .collection('departments')
+        .doc(theDepartment)
+        .collection('patients')
+        .doc(patientId)
+        .collection('todos')
+        .add({
       'todoContent': todoContent,
       'dateCreated': DateTime.now().toIso8601String(),
-      'likes': 0, // Ensure 'likes' field is always set
+      'dateAccomplished': null,
+      'likes': 0,
     });
-  }
-}
-
-class CommentsSection extends StatelessWidget {
-  final String patientId;
-  final String docId;
-  final String collectionName;
-
-  CommentsSection(
-      {required this.patientId,
-      required this.docId,
-      required this.collectionName});
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: double.maxFinite,
-      child: Column(
-        children: [
-          // Placeholder for comments list and input field
-        ],
-      ),
-    );
   }
 }

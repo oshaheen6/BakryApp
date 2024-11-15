@@ -121,8 +121,9 @@ class PatientListScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      NotesTodoScreen(patientId: patientId),
+                                  builder: (context) => NotesTodoScreen(
+                                      theDepartment: department!,
+                                      patientId: patientId),
                                 ),
                               );
                             },
