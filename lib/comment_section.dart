@@ -122,7 +122,6 @@ class CommentsSection extends StatelessWidget {
   }
 
   String _formatTimestamp(String date) {
-    // Implement formatting if necessary (e.g., "2 hours ago")
-    return date; // For now, display as is
+    return date; // Implement formatting if needed
   }
 }

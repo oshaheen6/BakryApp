@@ -308,19 +308,40 @@ class NotesTodoScreen extends StatelessWidget {
       String docId, String collectionName, BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Comments'),
-        content: CommentsSection(
-            department: theDepartment,
-            patientId: patientId,
-            docId: docId,
-            collectionName: collectionName),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      builder: (context) => Dialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 500), // Set a max height
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: CommentsSection(
+                  department: '', // Pass the department if necessary
+                  patientId: patientId,
+                  docId: docId,
+                  collectionName: collectionName,
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
