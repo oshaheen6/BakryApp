@@ -48,12 +48,12 @@ class TpnDetailScreen extends StatelessWidget {
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              // Check if the screen width is small (e.g., mobile)
-              bool isMobile = constraints.maxWidth < 600;
+              // Determine the orientation
+              bool isPortrait = constraints.maxWidth < constraints.maxHeight;
 
               return Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: isMobile
+                child: isPortrait
                     ? ListView(
                         children: [
                           _buildCard(
@@ -124,7 +124,7 @@ class TpnDetailScreen extends StatelessWidget {
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 0.8, // Adjust height ratio
+                        childAspectRatio: 0.8,
                         children: [
                           _buildCard(
                             title: 'Info',
@@ -217,37 +217,44 @@ class TpnDetailScreen extends StatelessWidget {
             ),
             const Divider(),
             Expanded(
-              child: ListView(
-                children: data.entries.map((entry) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 4,
-                          child: Text(
-                            '${entry.key}:',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: data.entries.map((entry) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            flex: 4,
+                            child: Text(
+                              '${entry.key}:',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          flex: 6,
-                          child: Text(
-                            entry.value.isEmpty ? '—' : entry.value,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[700],
+                          const SizedBox(width: 8),
+                          Flexible(
+                            flex: 6,
+                            child: Text(
+                              entry.value.isEmpty ? '—' : entry.value,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                              softWrap:
+                                  true, // Ensure text wraps to the next line
+                              overflow: TextOverflow.visible,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ],
@@ -256,12 +263,28 @@ class TpnDetailScreen extends StatelessWidget {
     );
   }
 
-  // Function to check if the value is NaN
+  Widget _buildDetailedTpnScreen(List<Map<String, String>> tpnDataList) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, // Always show 2 cards side by side
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.75, // Adjust this to tweak card height vs width
+      ),
+      itemCount: tpnDataList.length,
+      itemBuilder: (context, index) {
+        final tpnData = tpnDataList[index];
+        final title = 'TPN ${index + 1}'; // Example title, customize as needed
+        return _buildCard(title: title, data: tpnData);
+      },
+    );
+  }
+
   String _getNonNaNValue(dynamic value) {
     if (value is double && value.isNaN) {
-      return ''; // Return an empty string if the value is NaN
+      return '';
     }
-    return value?.toString() ??
-        ''; // Return the value or an empty string if null
+    return value?.toString() ?? '';
   }
 }
