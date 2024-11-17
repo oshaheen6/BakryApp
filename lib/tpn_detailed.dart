@@ -46,63 +46,152 @@ class TpnDetailScreen extends StatelessWidget {
           final parameters =
               snapshot.data!.docs.first.data() as Map<String, dynamic>;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              children: [
-                _buildCard(
-                  title: 'Info',
-                  data: {
-                    'Patient Name': parameters['patient_name'] ?? '',
-                    'Weight (Kg)': _getNonNaNValue(parameters['weight']),
-                    'Net Volume': _getNonNaNValue(parameters['net_volume']),
-                    'Rate': _getNonNaNValue(parameters['net_volume'] != null
-                        ? (parameters['net_volume'] / 24).toStringAsFixed(2)
-                        : null),
-                  },
-                ),
-                _buildCard(
-                  title: 'Fluid Calculation',
-                  data: {
-                    'ml/kg/day': _getNonNaNValue(parameters['ml_kg']),
-                    'Feeding': _getNonNaNValue(parameters['total_feeding']),
-                    'Restriction':
-                        _getNonNaNValue(parameters['restriction_ml']),
-                    'Drugs (mls)': _getNonNaNValue(parameters['Drugs_mls']),
-                    'Fills': _getNonNaNValue(parameters['fills_ml']),
-                  },
-                ),
-                _buildCard(
-                  title: 'Parameters',
-                  data: {
-                    'Na': _getNonNaNValue(parameters['sodium_meq']),
-                    'K': _getNonNaNValue(parameters['potassium_meq']),
-                    'Glycophos': _getNonNaNValue(parameters['glyco_mmol']),
-                    'Mg': _getNonNaNValue(parameters['magnesium_mmol']),
-                    'Vitamin':
-                        _getNonNaNValue(parameters['vitamin_concentration']),
-                    'Trace Element': _getNonNaNValue(
-                        parameters['trace_elements_concentration']),
-                    'Protein': _getNonNaNValue(parameters['protein_grams']),
-                    'Lipid': _getNonNaNValue(parameters['lipid_grams']),
-                    'GIR': _getNonNaNValue(parameters['Gir_required']),
-                  },
-                ),
-                _buildCard(
-                  title: 'Osmolarity & Calories',
-                  data: {
-                    'Osmolarity': _getNonNaNValue(parameters['osmolarity']),
-                    'Kcal from Fluid':
-                        _getNonNaNValue(parameters['kcal_from_fluid']),
-                    'Feeding Kcal': _getNonNaNValue(parameters['feeding_kcal']),
-                    'Total Kcal': _getNonNaNValue(parameters['total_kcal']),
-                  },
-                ),
-              ],
-            ),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // Check if the screen width is small (e.g., mobile)
+              bool isMobile = constraints.maxWidth < 600;
+
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: isMobile
+                    ? ListView(
+                        children: [
+                          _buildCard(
+                            title: 'Info',
+                            data: {
+                              'Patient Name': parameters['patient_name'] ?? '',
+                              'Weight (Kg)':
+                                  _getNonNaNValue(parameters['weight']),
+                              'Net Volume':
+                                  _getNonNaNValue(parameters['net_volume']),
+                              'Rate': _getNonNaNValue(
+                                  parameters['net_volume'] != null
+                                      ? (parameters['net_volume'] / 24)
+                                          .toStringAsFixed(2)
+                                      : null),
+                            },
+                          ),
+                          _buildCard(
+                            title: 'Fluid Calculation',
+                            data: {
+                              'ml/kg/day': _getNonNaNValue(parameters['ml_kg']),
+                              'Feeding':
+                                  _getNonNaNValue(parameters['total_feeding']),
+                              'Restriction':
+                                  _getNonNaNValue(parameters['restriction_ml']),
+                              'Drugs (mls)':
+                                  _getNonNaNValue(parameters['Drugs_mls']),
+                              'Fills': _getNonNaNValue(parameters['fills_ml']),
+                            },
+                          ),
+                          _buildCard(
+                            title: 'Parameters',
+                            data: {
+                              'Na': _getNonNaNValue(parameters['sodium_meq']),
+                              'K': _getNonNaNValue(parameters['potassium_meq']),
+                              'Glycophos':
+                                  _getNonNaNValue(parameters['glyco_mmol']),
+                              'Mg':
+                                  _getNonNaNValue(parameters['magnesium_mmol']),
+                              'Vitamin': _getNonNaNValue(
+                                  parameters['vitamin_concentration']),
+                              'Trace Element': _getNonNaNValue(
+                                  parameters['trace_elements_concentration']),
+                              'Protein':
+                                  _getNonNaNValue(parameters['protein_grams']),
+                              'Lipid':
+                                  _getNonNaNValue(parameters['lipid_grams']),
+                              'GIR':
+                                  _getNonNaNValue(parameters['Gir_required']),
+                            },
+                          ),
+                          _buildCard(
+                            title: 'Osmolarity & Calories',
+                            data: {
+                              'Osmolarity':
+                                  _getNonNaNValue(parameters['osmolarity']),
+                              'Kcal from Fluid': _getNonNaNValue(
+                                  parameters['kcal_from_fluid']),
+                              'Feeding Kcal':
+                                  _getNonNaNValue(parameters['feeding_kcal']),
+                              'Total Kcal':
+                                  _getNonNaNValue(parameters['total_kcal']),
+                            },
+                          ),
+                        ],
+                      )
+                    : GridView.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.8, // Adjust height ratio
+                        children: [
+                          _buildCard(
+                            title: 'Info',
+                            data: {
+                              'Patient Name': parameters['patient_name'] ?? '',
+                              'Weight (Kg)':
+                                  _getNonNaNValue(parameters['weight']),
+                              'Net Volume':
+                                  _getNonNaNValue(parameters['net_volume']),
+                              'Rate': _getNonNaNValue(
+                                  parameters['net_volume'] != null
+                                      ? (parameters['net_volume'] / 24)
+                                          .toStringAsFixed(2)
+                                      : null),
+                            },
+                          ),
+                          _buildCard(
+                            title: 'Fluid Calculation',
+                            data: {
+                              'ml/kg/day': _getNonNaNValue(parameters['ml_kg']),
+                              'Feeding':
+                                  _getNonNaNValue(parameters['total_feeding']),
+                              'Restriction':
+                                  _getNonNaNValue(parameters['restriction_ml']),
+                              'Drugs (mls)':
+                                  _getNonNaNValue(parameters['Drugs_mls']),
+                              'Fills': _getNonNaNValue(parameters['fills_ml']),
+                            },
+                          ),
+                          _buildCard(
+                            title: 'Parameters',
+                            data: {
+                              'Na': _getNonNaNValue(parameters['sodium_meq']),
+                              'K': _getNonNaNValue(parameters['potassium_meq']),
+                              'Glycophos':
+                                  _getNonNaNValue(parameters['glyco_mmol']),
+                              'Mg':
+                                  _getNonNaNValue(parameters['magnesium_mmol']),
+                              'Vitamin': _getNonNaNValue(
+                                  parameters['vitamin_concentration']),
+                              'Trace Element': _getNonNaNValue(
+                                  parameters['trace_elements_concentration']),
+                              'Protein':
+                                  _getNonNaNValue(parameters['protein_grams']),
+                              'Lipid':
+                                  _getNonNaNValue(parameters['lipid_grams']),
+                              'GIR':
+                                  _getNonNaNValue(parameters['Gir_required']),
+                            },
+                          ),
+                          _buildCard(
+                            title: 'Osmolarity & Calories',
+                            data: {
+                              'Osmolarity':
+                                  _getNonNaNValue(parameters['osmolarity']),
+                              'Kcal from Fluid': _getNonNaNValue(
+                                  parameters['kcal_from_fluid']),
+                              'Feeding Kcal':
+                                  _getNonNaNValue(parameters['feeding_kcal']),
+                              'Total Kcal':
+                                  _getNonNaNValue(parameters['total_kcal']),
+                            },
+                          ),
+                        ],
+                      ),
+              );
+            },
           );
         },
       ),

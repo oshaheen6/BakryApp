@@ -187,8 +187,6 @@ class PatientListScreen extends StatelessWidget {
                                 return StreamBuilder(
                                   stream: medDoc.reference
                                       .collection('daily_entries')
-                                      .orderBy('date', descending: true)
-                                      .limit(1)
                                       .snapshots(),
                                   builder: (context,
                                       AsyncSnapshot<QuerySnapshot>
@@ -196,35 +194,45 @@ class PatientListScreen extends StatelessWidget {
                                     if (dailySnapshot.connectionState ==
                                         ConnectionState.waiting) {
                                       return const CircularProgressIndicator();
-                                    } else if (dailySnapshot.hasData &&
-                                        dailySnapshot.data!.docs.isNotEmpty) {
-                                      final dailyEntry =
-                                          dailySnapshot.data!.docs.first;
-                                      final drugName = medDoc.id;
-                                      final dose = dailyEntry['dose(number)'];
-                                      final doseUnit = dailyEntry['dose(unit)'];
-                                      final regimen = dailyEntry['regimen'];
-                                      final amounts = dailyEntry['amounts'];
+                                    } else if (dailySnapshot.hasData) {
+                                      // Count the number of daily entries
+                                      final count =
+                                          dailySnapshot.data!.docs.length;
 
-                                      return ListTile(
-                                        title: Text(
-                                          drugName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                      if (count > 0) {
+                                        final dailyEntry =
+                                            dailySnapshot.data!.docs.first;
+                                        final drugName = medDoc.id;
+                                        final dose = dailyEntry['dose(number)'];
+                                        final doseUnit =
+                                            dailyEntry['dose(unit)'];
+                                        final regimen = dailyEntry['regimen'];
+                                        final amounts = dailyEntry['amounts'];
+
+                                        return ListTile(
+                                          title: Text(
+                                            drugName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        subtitle: Text(
-                                            'Dose: $dose $doseUnit, ($amounts ml) every: $regimen'),
-                                        trailing: Text(
-                                          'no. of days: $count',
-                                          style: TextStyle(
-                                              color: Colors.grey[600]),
-                                        ),
-                                      );
+                                          subtitle: Text(
+                                              'Dose: $dose $doseUnit, ($amounts ml) every: $regimen'),
+                                          trailing: Text(
+                                            'No. of days: $count',
+                                            style: TextStyle(
+                                                color: Colors.grey[600]),
+                                          ),
+                                        );
+                                      } else {
+                                        return const Center(
+                                            child: Text(
+                                                'No daily entries available.'));
+                                      }
                                     } else {
                                       return const Center(
                                           child: Text(
-                                              'No current medication data available.'));
+                                              'Error fetching daily entries.'));
                                     }
                                   },
                                 );

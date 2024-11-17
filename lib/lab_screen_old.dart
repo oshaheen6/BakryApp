@@ -46,7 +46,7 @@ class _LabsScreenState extends State<LabsScreen> {
     super.initState();
     labsRef = FirebaseFirestore.instance
         .collection('departments')
-        .doc('NICU') // Adjust to be dynamic if needed
+        .doc('NICU') // Adjust dynamically if needed
         .collection('patients')
         .doc(widget.patientId)
         .collection('labs');
@@ -81,22 +81,11 @@ class _LabsScreenState extends State<LabsScreen> {
     double result = 0;
     bool isCritical = false;
 
-    // Retrieve the ranges for NICU and PICU
-    final ranges = labCategories.values
-        .expand((category) => category)
-        .firstWhere((lab) => lab['name'] == labName);
-
     await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Determine if the result is within NICU or PICU ranges
-            bool isWithinNICURange =
-                result >= ranges['NICU'][0] && result <= ranges['NICU'][1];
-            bool isWithinPICURange =
-                result >= ranges['PICU'][0] && result <= ranges['PICU'][1];
-
             return AlertDialog(
               title: Text('Add $labName Test'),
               content: Column(
@@ -107,25 +96,9 @@ class _LabsScreenState extends State<LabsScreen> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       result = double.tryParse(value) ?? 0;
-                      setState(() {}); // Update the dialog with new result
+                      setState(() {});
                     },
                   ),
-                  const SizedBox(height: 10),
-                  if (result > 0) ...[
-                    Text(
-                      isWithinNICURange
-                          ? 'Result is within normal range.'
-                          : isWithinPICURange
-                              ? 'Result is within normal range.'
-                              : 'Result is outside normal ranges.',
-                      style: TextStyle(
-                        color: isWithinNICURange || isWithinPICURange
-                            ? Colors.green
-                            : Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
                   CheckboxListTile(
                     title: const Text('Mark as Critical'),
                     value: isCritical,
@@ -144,7 +117,6 @@ class _LabsScreenState extends State<LabsScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Add the lab test result to Firestore
                     labsRef?.doc(labName).set({
                       'results': FieldValue.arrayUnion([
                         {
@@ -155,7 +127,6 @@ class _LabsScreenState extends State<LabsScreen> {
                         }
                       ])
                     }, SetOptions(merge: true));
-
                     Navigator.of(context).pop();
                   },
                   child: const Text('Add'),
@@ -163,6 +134,34 @@ class _LabsScreenState extends State<LabsScreen> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  Future<String?> _editActionTakenDialog(String initialText) async {
+    final controller = TextEditingController(text: initialText);
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Action Taken'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Action Taken'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('Save'),
+            ),
+          ],
         );
       },
     );
@@ -178,13 +177,20 @@ class _LabsScreenState extends State<LabsScreen> {
   }
 
   Widget _buildActionTakenWidget(
-      Map<String, dynamic> resultData, String labName, int resultIndex) {
+      Map<String, dynamic> resultData, String labName) {
     bool hasAction = resultData['actionTaken']?.isNotEmpty == true;
 
     return hasAction
         ? GestureDetector(
-            onTap: () {
-              _editActionTaken(resultData, labName, resultIndex);
+            onTap: () async {
+              final updatedAction =
+                  await _editActionTakenDialog(resultData['actionTaken']);
+              if (updatedAction != null) {
+                resultData['actionTaken'] = updatedAction;
+                labsRef?.doc(labName).update({
+                  'results': FieldValue.arrayUnion([resultData])
+                });
+              }
             },
             child: Text(
               resultData['actionTaken'],
@@ -197,53 +203,18 @@ class _LabsScreenState extends State<LabsScreen> {
         : CheckboxListTile(
             title: const Text('Add Action Taken'),
             value: false,
-            onChanged: (value) {
+            onChanged: (value) async {
               if (value == true) {
-                _editActionTaken(resultData, labName, resultIndex);
-              }
-            },
-          );
-  }
-
-  Future<void> _editActionTaken(
-      Map<String, dynamic> resultData, String labName, int resultIndex) async {
-    String actionTaken = resultData['actionTaken'] ?? '';
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Action Taken'),
-          content: TextField(
-            decoration: const InputDecoration(labelText: 'Action Taken'),
-            controller: TextEditingController(text: actionTaken),
-            onChanged: (value) {
-              actionTaken = value;
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                resultData['actionTaken'] = actionTaken;
-                labsRef?.doc(labName).update({
-                  'results': FieldValue.arrayRemove([resultData])
-                }).then((_) {
+                final newAction = await _editActionTakenDialog('');
+                if (newAction != null && newAction.isNotEmpty) {
+                  resultData['actionTaken'] = newAction;
                   labsRef?.doc(labName).update({
                     'results': FieldValue.arrayUnion([resultData])
                   });
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
+                }
+              }
+            },
+          );
   }
 
   @override
@@ -300,10 +271,8 @@ class _LabsScreenState extends State<LabsScreen> {
                             DataCell(
                                 Text('${date.day}-${date.month}-${date.year}')),
                             DataCell(Text(isCritical ? 'Yes' : 'No')),
-                            DataCell(isCritical
-                                ? _buildActionTakenWidget(resultData, labName,
-                                    results.indexOf(resultData))
-                                : const Text('-')),
+                            DataCell(
+                                _buildActionTakenWidget(resultData, labName)),
                           ]);
                         }).toList(),
                       ),
