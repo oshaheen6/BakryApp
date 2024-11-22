@@ -8,28 +8,45 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatelessWidget {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
 
-  Duration get loginTime => const Duration(milliseconds: 2250);
+class _LoginScreenState extends State<LoginScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isSignUpButtonVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(() {
+      setState(() {
+        _isSignUpButtonVisible = _passwordController.text.isEmpty;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   Future<String?> _loginUser(BuildContext context, LoginData data) async {
     try {
-      // Sign in the user using Firebase Auth
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: data.name,
         password: data.password,
       );
 
-      // Fetch the user's approval status from Firestore
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .get();
 
-      // Check if the user is approved
       if (userDoc.exists && userDoc.data()!['isApproved'] == true) {
-        // Set the username in the provider for later use
         Provider.of<UserProvider>(context, listen: false)
             .setUsername(userCredential.user?.email ?? '');
 
@@ -39,10 +56,8 @@ class LoginScreen extends StatelessWidget {
             'loginTimestamp', DateTime.now().millisecondsSinceEpoch);
         await prefs.setString('username', userCredential.user?.email ?? '');
 
-        // Navigate to the Department Selection screen
-        return null; // Return null for successful login
+        return null; // Successful login
       } else {
-        // If the user is not approved, show a message and return an error
         return 'Your account is not approved yet. Please wait for admin approval.';
       }
     } on FirebaseAuthException catch (e) {
@@ -101,10 +116,10 @@ class LoginScreen extends StatelessWidget {
                 elevation: 8.0,
                 shadowColor: Colors.grey,
               ),
-              inputTheme: const InputDecorationTheme(
+              inputTheme: InputDecorationTheme(
                 filled: true,
-                fillColor: Colors.grey,
-                border: OutlineInputBorder(
+                fillColor: Colors.grey[200],
+                border: const OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 ),
               ),
@@ -121,27 +136,28 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            bottom: 20,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => SignUpScreen(),
-                  ));
-                },
-                child: const Text(
-                  "Sign Up",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
+          if (_isSignUpButtonVisible)
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => SignUpScreen(),
+                    ));
+                  },
+                  child: const Text(
+                    "Sign Up",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

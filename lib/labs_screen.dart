@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '/provider/user_provider.dart';
 
 class LabsScreen extends StatefulWidget {
   final String patientId;
@@ -13,6 +15,43 @@ class _LabsScreenState extends State<LabsScreen> {
   CollectionReference? labsRef;
 
   final Map<String, List<Map<String, dynamic>>> labCategories = {
+    'CBC': [
+      {
+        'name': 'RBC',
+        'NICU': [135, 145],
+        'PICU': [135, 145]
+      },
+      {
+        'name': 'Hb',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'WBC',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Plt',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Staff',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Seg',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Retics',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+    ],
     'Electrolytes': [
       {
         'name': 'Na',
@@ -24,10 +63,45 @@ class _LabsScreenState extends State<LabsScreen> {
         'NICU': [3.5, 6],
         'PICU': [3.5, 6]
       },
+      {
+        'name': 'Ca+',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Ion Ca++',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Mg',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
+      {
+        'name': 'Ph',
+        'NICU': [3.5, 6],
+        'PICU': [3.5, 6]
+      },
     ],
     'Liver Function': [
       {
         'name': 'ALT',
+        'NICU': [10, 40],
+        'PICU': [10, 40]
+      },
+      {
+        'name': 'AST',
+        'NICU': [10, 40],
+        'PICU': [10, 40]
+      },
+      {
+        'name': 'Bilirubin',
+        'NICU': [10, 40],
+        'PICU': [10, 40]
+      },
+      {
+        'name': 'T.Bilirubin',
         'NICU': [10, 40],
         'PICU': [10, 40]
       },
@@ -38,18 +112,49 @@ class _LabsScreenState extends State<LabsScreen> {
         'NICU': [0.2, 0.9],
         'PICU': [0.2, 0.9]
       },
+      {
+        'name': 'Urea',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
+      {
+        'name': 'BUN',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
+    ],
+    'Clotting': [
+      {
+        'name': 'PT',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
+      {
+        'name': 'PTT',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
+      {
+        'name': 'APTT',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
+      {
+        'name': 'Fibrinogen',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
+      {
+        'name': 'INR',
+        'NICU': [0.2, 0.9],
+        'PICU': [0.2, 0.9]
+      },
     ],
   };
 
   @override
   void initState() {
     super.initState();
-    labsRef = FirebaseFirestore.instance
-        .collection('departments')
-        .doc('NICU') // Adjust to be dynamic if needed
-        .collection('patients')
-        .doc(widget.patientId)
-        .collection('labs');
   }
 
   Future<void> _showLabTestSelection() async {
@@ -248,6 +353,15 @@ class _LabsScreenState extends State<LabsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final department = userProvider.department;
+    labsRef = FirebaseFirestore.instance
+        .collection('departments')
+        .doc(department) // Adjust to be dynamic if needed
+        .collection('patients')
+        .doc(widget.patientId)
+        .collection('labs');
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lab Results'),

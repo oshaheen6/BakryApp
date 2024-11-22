@@ -39,6 +39,7 @@ dependencies:
 dev_dependencies:
   cloud_firestore: ^5.4.4
   connectivity_plus: ^6.1.0
+  flutter_launcher_icons: ^0.14.1
   flutter_lints: ^3.0.0
   flutter_login: ^5.0.0
   flutter_speed_dial: ^7.0.0

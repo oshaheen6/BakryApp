@@ -1,3 +1,4 @@
+import 'package:bakryapp/patient_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bakryapp/all_medication.dart';
@@ -18,6 +19,23 @@ class PatientListScreen extends StatelessWidget {
         .collection('departments')
         .doc(department)
         .collection('patients');
+
+    Future<Map<String, int>> calculateAges(
+        QueryDocumentSnapshot patient) async {
+      final dob = patient['dateOfBirth']; // Ensure Firestore has `dateOfBirth`
+      final gestationWeeksAtBirth = patient['gestationWeeksAtBirth'];
+
+      final birthDate = (dob as Timestamp).toDate();
+      final currentDate = DateTime.now();
+
+      final postnatalAge = currentDate.difference(birthDate).inDays;
+      final gestationAge = (gestationWeeksAtBirth * 7) + postnatalAge;
+
+      return {
+        'gestationAge': gestationAge,
+        'postnatalAge': postnatalAge,
+      };
+    }
 
     Future<bool> checkForTpnParameters(String patientId) async {
       final tpnRef = FirebaseFirestore.instance
@@ -72,9 +90,48 @@ class PatientListScreen extends StatelessWidget {
                   ),
                   elevation: 4,
                   child: ExpansionTile(
-                    title: Text(
-                      patientName,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    title: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PatientInfoScreen(
+                              patientId: patientId,
+                              department: department!,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            patientName,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          FutureBuilder(
+                            future: calculateAges(patient),
+                            builder: (context,
+                                AsyncSnapshot<Map<String, int>> snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Text('Calculating ages...');
+                              } else if (snapshot.hasError) {
+                                return const Text('Error calculating ages');
+                              } else if (snapshot.hasData) {
+                                final ages = snapshot.data!;
+                                return Text(
+                                  'Gestation Age: ${ages['gestationAge']} days, '
+                                  'Postnatal Age: ${ages['postnatalAge']} days',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                );
+                              } else {
+                                return const Text('Age data unavailable');
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                     childrenPadding:
                         const EdgeInsets.symmetric(horizontal: 16.0),
@@ -82,6 +139,13 @@ class PatientListScreen extends StatelessWidget {
                       OverflowBar(
                         alignment: MainAxisAlignment.spaceEvenly,
                         children: [
+                          Text(
+                            'Fetched on: ${DateTime.now().toString().split(' ')[0]}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                           ElevatedButton.icon(
                             onPressed: () {
                               Navigator.push(
@@ -96,7 +160,8 @@ class PatientListScreen extends StatelessWidget {
                             label: const Text('All Medication'),
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           ),
                           ElevatedButton.icon(
@@ -113,7 +178,8 @@ class PatientListScreen extends StatelessWidget {
                             label: const Text('Labs'),
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           ),
                           ElevatedButton.icon(
@@ -172,13 +238,8 @@ class PatientListScreen extends StatelessWidget {
                             AsyncSnapshot<QuerySnapshot> medSnapshot) {
                           if (medSnapshot.connectionState ==
                               ConnectionState.waiting) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          } else if (medSnapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${medSnapshot.error}'));
-                          } else if (medSnapshot.hasData &&
-                              medSnapshot.data!.docs.isNotEmpty) {
+                            return const CircularProgressIndicator();
+                          } else if (medSnapshot.hasData) {
                             List<QueryDocumentSnapshot> medications =
                                 medSnapshot.data!.docs;
 
@@ -195,7 +256,6 @@ class PatientListScreen extends StatelessWidget {
                                         ConnectionState.waiting) {
                                       return const CircularProgressIndicator();
                                     } else if (dailySnapshot.hasData) {
-                                      // Count the number of daily entries
                                       final count =
                                           dailySnapshot.data!.docs.length;
 
@@ -216,8 +276,15 @@ class PatientListScreen extends StatelessWidget {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          subtitle: Text(
-                                              'Dose: $dose $doseUnit, ($amounts ml) every: $regimen'),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Dose: $dose $doseUnit, ($amounts ml) every: $regimen',
+                                              ),
+                                            ],
+                                          ),
                                           trailing: Text(
                                             'No. of days: $count',
                                             style: TextStyle(
@@ -226,22 +293,25 @@ class PatientListScreen extends StatelessWidget {
                                         );
                                       } else {
                                         return const Center(
-                                            child: Text(
-                                                'No daily entries available.'));
+                                          child: Text(
+                                              'No daily entries available.'),
+                                        );
                                       }
                                     } else {
                                       return const Center(
-                                          child: Text(
-                                              'Error fetching daily entries.'));
+                                        child: Text(
+                                            'Error fetching daily entries.'),
+                                      );
                                     }
                                   },
                                 );
-                              }).toList(), // Convert the mapped iterable to a list
+                              }).toList(),
                             );
                           } else {
                             return const Center(
-                                child: Text(
-                                    'No current medication data available.'));
+                              child:
+                                  Text('No current medication data available.'),
+                            );
                           }
                         },
                       ),
