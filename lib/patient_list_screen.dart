@@ -7,12 +7,31 @@ import 'package:bakryapp/labs_screen.dart';
 import 'package:bakryapp/notes_todo_screen.dart';
 import 'package:bakryapp/tpn_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:hive/hive.dart';
 import '/provider/user_provider.dart';
 
-class PatientListScreen extends StatelessWidget {
+class PatientListScreen extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+  _PatientListScreenState createState() => _PatientListScreenState();
+}
+
+class _PatientListScreenState extends State<PatientListScreen> {
+  late Box localDatabase;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocalDatabase();
+  }
+
+  Future<void> _initializeLocalDatabase() async {
+    localDatabase = await Hive.openBox('patient_data');
+    await _fetchAndCacheData(); // Fetch data when the app starts
+  }
+
+  Future<void> _fetchAndCacheData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     final department = userProvider.department;
 
     final CollectionReference patientsRef = FirebaseFirestore.instance
@@ -20,13 +39,8 @@ class PatientListScreen extends StatelessWidget {
         .doc(department)
         .collection('patients');
 
-    Future<Map<String, int>> calculateAges(
-        QueryDocumentSnapshot patient) async {
-      final dob = patient['dateOfBirth']; // Ensure Firestore has `dateOfBirth`
-      final gestationWeeksAtBirth = patient['gestationWeeksAtBirth'];
-
-      final birthDate = (dob as Timestamp).toDate();
-      final currentDate = DateTime.now();
+      final snapshot =
+          await patientsRef.where('state', isEqualTo: 'current').get();
 
       final postnatalAge = currentDate.difference(birthDate).inDays;
       final gestationAge = (gestationWeeksAtBirth * 7) + postnatalAge;
@@ -97,225 +111,11 @@ class PatientListScreen extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => PatientInfoScreen(
                               patientId: patientId,
-                              department: department!,
-                            ),
+                            department: Provider.of<UserProvider>(context, listen: false).department!,
                           ),
-                        );
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            patientName,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          FutureBuilder(
-                            future: calculateAges(patient),
-                            builder: (context,
-                                AsyncSnapshot<Map<String, int>> snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Text('Calculating ages...');
-                              } else if (snapshot.hasError) {
-                                return const Text('Error calculating ages');
-                              } else if (snapshot.hasData) {
-                                final ages = snapshot.data!;
-                                return Text(
-                                  'Gestation Age: ${ages['gestationAge']} days, '
-                                  'Postnatal Age: ${ages['postnatalAge']} days',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                );
-                              } else {
-                                return const Text('Age data unavailable');
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    childrenPadding:
-                        const EdgeInsets.symmetric(horizontal: 16.0),
-                    children: [
-                      OverflowBar(
-                        alignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Text(
-                            'Fetched on: ${DateTime.now().toString().split(' ')[0]}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AllMedicationsScreen(patient: patient),
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.medical_services_outlined),
-                            label: const Text('All Medication'),
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      LabsScreen(patientId: patientId),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.science_outlined),
-                            label: const Text('Labs'),
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => NotesTodoScreen(
-                                      theDepartment: department!,
-                                      patientId: patientId),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.notes_outlined),
-                            label: const Text('Notes & Todo'),
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              bool hasTpn =
-                                  await checkForTpnParameters(patientId);
-                              if (hasTpn) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        TpnScreen(patientId: patientId),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'No TPN data available for this patient.')),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.medical_services_outlined),
-                            label: const Text('TPN'),
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      StreamBuilder(
-                        stream: patient.reference
-                            .collection('medication')
-                            .where('state', isEqualTo: 'still on')
-                            .snapshots(),
-                        builder: (context,
-                            AsyncSnapshot<QuerySnapshot> medSnapshot) {
-                          if (medSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          } else if (medSnapshot.hasData) {
-                            List<QueryDocumentSnapshot> medications =
-                                medSnapshot.data!.docs;
-
-                            return Column(
-                              children: medications.map((medDoc) {
-                                return StreamBuilder(
-                                  stream: medDoc.reference
-                                      .collection('daily_entries')
-                                      .snapshots(),
-                                  builder: (context,
-                                      AsyncSnapshot<QuerySnapshot>
-                                          dailySnapshot) {
-                                    if (dailySnapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return const CircularProgressIndicator();
-                                    } else if (dailySnapshot.hasData) {
-                                      final count =
-                                          dailySnapshot.data!.docs.length;
-
-                                      if (count > 0) {
-                                        final dailyEntry =
-                                            dailySnapshot.data!.docs.first;
-                                        final drugName = medDoc.id;
-                                        final dose = dailyEntry['dose(number)'];
-                                        final doseUnit =
-                                            dailyEntry['dose(unit)'];
-                                        final regimen = dailyEntry['regimen'];
-                                        final amounts = dailyEntry['amounts'];
-
-                                        return ListTile(
-                                          title: Text(
-                                            drugName,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Dose: $dose $doseUnit, ($amounts ml) every: $regimen',
-                                              ),
-                                            ],
-                                          ),
-                                          trailing: Text(
-                                            'No. of days: $count',
-                                            style: TextStyle(
-                                                color: Colors.grey[600]),
-                                          ),
-                                        );
-                                      } else {
-                                        return const Center(
-                                          child: Text(
-                                              'No daily entries available.'),
-                                        );
-                                      }
-                                    } else {
-                                      return const Center(
-                                        child: Text(
-                                            'Error fetching daily entries.'),
-                                      );
-                                    }
-                                  },
-                                );
-                              }).toList(),
-                            );
-                          } else {
-                            return const Center(
-                              child:
-                                  Text('No current medication data available.'),
-                            );
-                          }
-                        },
-                      ),
-                    ],
                   ),
                 );
               },
