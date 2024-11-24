@@ -117,8 +117,7 @@ class PatientListScreen extends StatelessWidget {
                                   ConnectionState.waiting) {
                                 return const Text('Calculating ages...');
                               } else if (snapshot.hasError) {
-                                return const Text(
-                                    'GA           postnatal Age:   ');
+                                return const Text('Error calculating ages');
                               } else if (snapshot.hasData) {
                                 final ages = snapshot.data!;
                                 return Text(

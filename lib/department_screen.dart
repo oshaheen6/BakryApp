@@ -1,3 +1,4 @@
+import 'package:bakryapp/drugs_monograph.dart';
 import 'package:bakryapp/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:bakryapp/patient_list_screen.dart';
@@ -16,7 +17,6 @@ class DepartmentSelectionScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // NICU Button
               _buildDepartmentButton(
                 context,
                 title: 'NICU',
@@ -33,7 +33,6 @@ class DepartmentSelectionScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 20),
-              // PICU Button
               _buildDepartmentButton(
                 context,
                 title: 'PICU',
@@ -45,6 +44,21 @@ class DepartmentSelectionScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => PatientListScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 120),
+              // Drug Monographs Button
+              _buildDepartmentButton(
+                context,
+                title: 'Drug Monographs',
+                color: const Color.fromARGB(162, 144, 248, 103),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DrugMonographScreen(),
                     ),
                   );
                 },
