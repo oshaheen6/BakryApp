@@ -20,22 +20,66 @@ class PatientListScreen extends StatelessWidget {
         .doc(department)
         .collection('patients');
 
-    Future<Map<String, int>> calculateAges(
+    Future<Map<String, dynamic>> calculateAges(
         QueryDocumentSnapshot patient) async {
-      final dob = patient['dateOfBirth']; // Ensure Firestore has `dateOfBirth`
-      final gestationWeeksAtBirth = patient['gestationWeeksAtBirth'];
+      try {
+        // Cast `data` to a Map
+        final Map<String, dynamic> patientData =
+            patient.data() as Map<String, dynamic>;
 
-      final birthDate = (dob as Timestamp).toDate();
-      final currentDate = DateTime.now();
+        // Check if `Day of birth` exists
+        if (!patientData.containsKey('Day of birth')) {
+          return {
+            'gestationAge': 'N/A',
+            'postnatalAge': 'No birth day available'
+          };
+        }
 
-      final postnatalAge = currentDate.difference(birthDate).inDays;
-      final gestationAge = (gestationWeeksAtBirth * 7) + postnatalAge;
+        // Retrieve `Day of birth` and `Gestational age`
+        final dob = patientData['Day of birth'];
+        final gestationWeeksAtBirth = patientData['Gestational age'] ?? 'N/A';
 
-      return {
-        'gestationAge': gestationAge,
-        'postnatalAge': postnatalAge,
-      };
+        // Convert to DateTime if necessary
+        DateTime birthDate;
+        if (dob is Timestamp) {
+          birthDate = dob.toDate();
+        } else if (dob is String) {
+          // Parse the string to DateTime
+          birthDate = DateTime.parse(dob);
+        } else {
+          throw 'Unsupported `Day of birth` format';
+        }
+
+        // Calculate ages
+        final currentDate = DateTime.now();
+        final postnatalAge = currentDate.difference(birthDate).inDays;
+
+        return {
+          'gestationAge': gestationWeeksAtBirth,
+          'postnatalAge': '$postnatalAge days',
+        };
+      } catch (e) {
+        print('Error calculating ages: $e');
+        return {'gestationAge': 'N/A', 'postnatalAge': 'Error calculating age'};
+      }
     }
+
+    Future<void> fetchAndCalculateAges() async {
+      final querySnapshot = await patientsRef.get();
+      print('Fetched ${querySnapshot.docs.length} patients');
+
+      for (final patient in querySnapshot.docs) {
+        try {
+          final ages = await calculateAges(patient);
+          print('Patient ${patient.id}:');
+          print('Gestation Age: ${ages['gestationAge']} days');
+          print('Postnatal Age: ${ages['postnatalAge']} days');
+        } catch (e) {
+          print('Error calculating ages for patient ${patient.id}: $e');
+        }
+      }
+    }
+    // The rest of your widget's build method remains the same...
 
     Future<bool> checkForTpnParameters(String patientId) async {
       final tpnRef = FirebaseFirestore.instance
@@ -112,20 +156,29 @@ class PatientListScreen extends StatelessWidget {
                           FutureBuilder(
                             future: calculateAges(patient),
                             builder: (context,
-                                AsyncSnapshot<Map<String, int>> snapshot) {
+                                AsyncSnapshot<Map<String, dynamic>> snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
                                 return const Text('Calculating ages...');
                               } else if (snapshot.hasError) {
-                                return const Text(
-                                    'GA           postnatal Age:   ');
+                                return const Text('Error calculating ages.');
                               } else if (snapshot.hasData) {
                                 final ages = snapshot.data!;
-                                return Text(
-                                  'Gestation Age: ${ages['gestationAge']} days, '
-                                  'Postnatal Age: ${ages['postnatalAge']} days',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                );
+                                final postnatalAge = ages['postnatalAge'];
+                                final gestationAge = ages['gestationAge'];
+
+                                if (postnatalAge == 'No birth day available') {
+                                  return const Text('No birth day available');
+                                } else if (postnatalAge ==
+                                    'Error calculating age') {
+                                  return const Text('Error calculating age');
+                                } else {
+                                  return Text(
+                                    'Gestation Age: $gestationAge, Postnatal Age: $postnatalAge',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  );
+                                }
                               } else {
                                 return const Text('Age data unavailable');
                               }

@@ -65,7 +65,8 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
         .update(updatedData);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Patient information updated successfully.')),
+      const SnackBar(
+          content: Text('Patient information updated successfully.')),
     );
   }
 
@@ -79,7 +80,7 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Patient Info'),
+        title: const Text('Patient Info'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,7 +102,7 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
                       TextFormField(
                         controller: dayOfBirthController,
                         readOnly: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Day of Birth',
                           border: OutlineInputBorder(),
                           suffixIcon: Icon(Icons.calendar_today),
@@ -127,7 +128,7 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
                       // Hour of Birth Field
                       TextFormField(
                         controller: hourOfBirthController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Hour of Birth',
                           border: OutlineInputBorder(),
                         ),
@@ -136,7 +137,7 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
                       // Gestational Age Field
                       TextFormField(
                         controller: gestationalAgeController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Gestational Age',
                           border: OutlineInputBorder(),
                         ),
@@ -146,7 +147,7 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
                       TextFormField(
                         controller: admissionDayController,
                         readOnly: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Admission Day',
                           border: OutlineInputBorder(),
                           suffixIcon: Icon(Icons.calendar_today),
@@ -183,7 +184,7 @@ class _PatientInfoScreenState extends State<PatientInfoScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Save Changes',
                           style: TextStyle(fontSize: 16),
                         ),
