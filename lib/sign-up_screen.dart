@@ -12,14 +12,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
 
+  String? _selectedJobTitle;
+  List<String> _selectedUnits = [];
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final List<String> _jobTitles = [
+    'Clinical Pharmacist',
+    'Physician',
+    'IV Pharmacist',
+  ];
+
+  final List<String> _units = [
+    'PICU',
+    'NICU',
+    'TPN',
+  ];
 
   void _signUp() async {
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
       final username = _usernameController.text.trim();
+
+      if (_selectedJobTitle == null || _selectedUnits.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select job title and units')),
+        );
+        return;
+      }
 
       // Register the user in Firebase Auth
       UserCredential userCredential =
@@ -34,6 +56,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'username': username,
         'isApproved': false, // Initially, not approved
         'createdAt': DateTime.now().toIso8601String(),
+        'permission': "",
+        'jobTitle': _selectedJobTitle,
+        'unit': _selectedUnits,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -129,6 +154,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       style: const TextStyle(color: Colors.black),
                     ),
+                    const SizedBox(height: 10),
+
+                    // Job Title Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedJobTitle,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedJobTitle = value;
+                        });
+                      },
+                      items: _jobTitles
+                          .map(
+                            (job) => DropdownMenuItem(
+                              value: job,
+                              child: Text(job),
+                            ),
+                          )
+                          .toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Job Title',
+                        filled: true,
+                        fillColor: Colors.grey,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Unit Selection
+                    Wrap(
+                      spacing: 10.0,
+                      children: _units.map((unit) {
+                        final isSelected = _selectedUnits.contains(unit);
+                        return ChoiceChip(
+                          label: Text(unit),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedUnits.add(unit);
+                              } else {
+                                _selectedUnits.remove(unit);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+
                     const SizedBox(height: 20),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(

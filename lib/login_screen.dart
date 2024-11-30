@@ -29,8 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
           .get();
 
       if (userDoc.exists && userDoc.data()!['isApproved'] == true) {
-        Provider.of<UserProvider>(context, listen: false)
-            .setUsername(userCredential.user?.email ?? '');
+        final userData = userDoc.data()!;
+
+        // Save data in UserProvider
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        userProvider.setUsername(userCredential.user?.email ?? '');
+        userProvider.setPermission(userData['permission'] ?? '');
+        userProvider.setJobTitle(userData['jobTitle'] ?? '');
+        userProvider.setUnits(List<String>.from(userData['unit'] ?? []));
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);

@@ -7,6 +7,9 @@ import 'package:provider/provider.dart';
 class DepartmentSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final units = userProvider.units ?? [];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Department'),
@@ -17,37 +20,41 @@ class DepartmentSelectionScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildDepartmentButton(
-                context,
-                title: 'NICU',
-                color: Colors.blueAccent,
-                onPressed: () {
-                  Provider.of<UserProvider>(context, listen: false)
-                      .setDepartment('NICU');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PatientListScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildDepartmentButton(
-                context,
-                title: 'PICU',
-                color: Colors.teal,
-                onPressed: () {
-                  Provider.of<UserProvider>(context, listen: false)
-                      .setDepartment('PICU');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PatientListScreen(),
-                    ),
-                  );
-                },
-              ),
+              if (units.contains('NICU') || units.contains('TPN'))
+                _buildDepartmentButton(
+                  context,
+                  title: 'NICU',
+                  color: Colors.blueAccent,
+                  onPressed: () {
+                    Provider.of<UserProvider>(context, listen: false)
+                        .setDepartment('NICU');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PatientListScreen(),
+                      ),
+                    );
+                  },
+                ),
+              if ((units.contains('NICU') || units.contains('TPN')) &&
+                  (units.contains('PICU') || units.contains('TPN')))
+                const SizedBox(height: 20),
+              if (units.contains('PICU') || units.contains('TPN'))
+                _buildDepartmentButton(
+                  context,
+                  title: 'PICU',
+                  color: Colors.teal,
+                  onPressed: () {
+                    Provider.of<UserProvider>(context, listen: false)
+                        .setDepartment('PICU');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PatientListScreen(),
+                      ),
+                    );
+                  },
+                ),
               const SizedBox(height: 120),
               // Drug Monographs Button
               _buildDepartmentButton(
