@@ -15,24 +15,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _passwordController = TextEditingController();
-  bool _isSignUpButtonVisible = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _passwordController.addListener(() {
-      setState(() {
-        _isSignUpButtonVisible = _passwordController.text.isEmpty;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   Future<String?> _loginUser(BuildContext context, LoginData data) async {
     try {
@@ -77,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Prevent the layout from resizing
       body: Stack(
         children: [
           FlutterLogin(
@@ -136,28 +119,27 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          if (_isSignUpButtonVisible)
-            Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => SignUpScreen(),
-                    ));
-                  },
-                  child: const Text(
-                    "Sign Up",
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => SignUpScreen(),
+                  ));
+                },
+                child: const Text(
+                  "Sign Up",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

@@ -26,6 +26,7 @@ class TpnDetailScreen extends StatelessWidget {
             .collection('patients')
             .doc(patientId)
             .collection('tpnParameters')
+            .where('date', isEqualTo: date)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
