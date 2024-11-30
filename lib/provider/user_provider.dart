@@ -38,7 +38,7 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void clearUserData() {
+  void clear() {
     _username = null;
     _department = null;
     _permission = null;

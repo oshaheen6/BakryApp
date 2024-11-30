@@ -1,18 +1,57 @@
+import 'package:bakryapp/admin_screen.dart';
 import 'package:bakryapp/drugs_monograph.dart';
+import 'package:bakryapp/login_screen.dart';
 import 'package:bakryapp/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:bakryapp/patient_list_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DepartmentSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final units = userProvider.units ?? [];
+    final units = userProvider.units ?? []; // Default to an empty list if null
+    final permission = userProvider.permission ?? '';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Department'),
+        title: Text('Welcome, ${userProvider.username ?? 'User'}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              // Clear Provider data
+              userProvider.clear();
+
+              // Clear cached data
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+
+              // Navigate to login screen
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => LoginScreen(),
+                ),
+              );
+            },
+          ),
+          if (permission == 'Admin')
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: IconButton(
+                icon: const Icon(Icons.admin_panel_settings),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdminPanelScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
       body: Center(
         child: Padding(
