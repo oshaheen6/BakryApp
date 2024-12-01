@@ -81,6 +81,15 @@ class PatientListScreen extends StatelessWidget {
     }
     // The rest of your widget's build method remains the same...
 
+    String formattedTime = DateTime.now()
+        .toString()
+        .split(' ')[1]
+        .substring(0, 5); // Get hours:minutes
+
+    String formattedDate = DateTime.now().toString().split(' ')[0]; // Get date
+
+    String formattedString = ' $formattedDate $formattedTime';
+
     Future<bool> checkForTpnParameters(String patientId) async {
       final tpnRef = FirebaseFirestore.instance
           .collection('departments')
@@ -194,7 +203,7 @@ class PatientListScreen extends StatelessWidget {
                         alignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Text(
-                            'Fetched on: ${DateTime.now().toString().split(' ')[0]}',
+                            'Fetched on: $formattedString',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontStyle: FontStyle.italic,

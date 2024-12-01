@@ -157,6 +157,66 @@ class _LabsScreenState extends State<LabsScreen> {
     super.initState();
   }
 
+  void _editLabResult(
+      String labName, List<dynamic> results, int resultIndex) async {
+    // Get the specific result to edit
+    Map<String, dynamic> resultData = results[resultIndex];
+
+    TextEditingController resultController = TextEditingController(
+      text: resultData['result'].toString(),
+    );
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Lab Result'),
+          content: TextField(
+            controller: resultController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Result'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final updatedResult = double.tryParse(resultController.text);
+                if (updatedResult != null) {
+                  // Create a copy of the result data with updated value
+                  Map<String, dynamic> updatedResultData = Map.from(resultData);
+                  updatedResultData['result'] = updatedResult;
+
+                  // Remove the old result and add the updated result
+                  labsRef?.doc(labName).update({
+                    'results': FieldValue.arrayRemove([resultData])
+                  }).then((_) {
+                    labsRef?.doc(labName).update({
+                      'results': FieldValue.arrayUnion([updatedResultData])
+                    });
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteLabResult(
+      String labName, List<dynamic> results, int resultIndex) {
+    // Get the specific result to delete
+    Map<String, dynamic> resultData = results[resultIndex];
+
+    labsRef?.doc(labName).update({
+      'results': FieldValue.arrayRemove([resultData])
+    });
+  }
+
   Future<void> _showLabTestSelection() async {
     showModalBottomSheet(
       context: context,
@@ -313,18 +373,18 @@ class _LabsScreenState extends State<LabsScreen> {
   Future<void> _editActionTaken(
       Map<String, dynamic> resultData, String labName, int resultIndex) async {
     String actionTaken = resultData['actionTaken'] ?? '';
+    TextEditingController actionController = TextEditingController(
+      text: actionTaken,
+    );
 
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Action Taken'),
+          title: const Text('Action Taken for Critical Result'),
           content: TextField(
             decoration: const InputDecoration(labelText: 'Action Taken'),
-            controller: TextEditingController(text: actionTaken),
-            onChanged: (value) {
-              actionTaken = value;
-            },
+            controller: actionController,
           ),
           actions: [
             TextButton(
@@ -333,14 +393,19 @@ class _LabsScreenState extends State<LabsScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                resultData['actionTaken'] = actionTaken;
+                // Create a new map with the updated action
+                Map<String, dynamic> updatedResultData = Map.from(resultData);
+                updatedResultData['actionTaken'] = actionController.text;
+
+                // Update the specific result in the array
                 labsRef?.doc(labName).update({
                   'results': FieldValue.arrayRemove([resultData])
                 }).then((_) {
                   labsRef?.doc(labName).update({
-                    'results': FieldValue.arrayUnion([resultData])
+                    'results': FieldValue.arrayUnion([updatedResultData])
                   });
                 });
+
                 Navigator.of(context).pop();
               },
               child: const Text('Save'),
@@ -372,64 +437,163 @@ class _LabsScreenState extends State<LabsScreen> {
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: labsRef?.snapshots(),
-        builder: (context, snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          // Handle all possible connection states
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-            final labs = snapshot.data!.docs;
-
-            return ListView.builder(
-              itemCount: labs.length,
-              itemBuilder: (context, index) {
-                final labDoc = labs[index];
-                final labName = labDoc.id;
-                final results = labDoc['results'] as List<dynamic>;
-
-                return Card(
-                  color: _getBackgroundColor(results.last),
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: ExpansionTile(
-                    title: Text(
-                      labName,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    children: [
-                      DataTable(
-                        columns: const [
-                          DataColumn(label: Text('Result')),
-                          DataColumn(label: Text('Date')),
-                          DataColumn(label: Text('Critical')),
-                          DataColumn(label: Text('Action Taken')),
-                        ],
-                        rows: results.map<DataRow>((resultData) {
-                          final result = resultData['result'];
-                          final date =
-                              (resultData['date'] as Timestamp).toDate();
-                          final isCritical = resultData['isCritical'];
-
-                          return DataRow(cells: [
-                            DataCell(Text(result.toString())),
-                            DataCell(
-                                Text('${date.day}-${date.month}-${date.year}')),
-                            DataCell(Text(isCritical ? 'Yes' : 'No')),
-                            DataCell(isCritical
-                                ? _buildActionTakenWidget(resultData, labName,
-                                    results.indexOf(resultData))
-                                : const Text('-')),
-                          ]);
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          } else {
-            return const Center(
-                child: Text('No lab data available. Press "+" to add.'));
           }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          // Check if data is null or empty
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text('No lab data available. Press "+" to add.'),
+            );
+          }
+
+          // Safe access to labs
+          final labs = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: labs.length,
+            itemBuilder: (context, index) {
+              final labDoc = labs[index];
+              final labName = labDoc.id;
+              final results = labDoc['results'] as List<dynamic>;
+
+              return Card(
+                color: results.isNotEmpty
+                    ? _getBackgroundColor(results.last)
+                    : Colors.green.shade200,
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Column(
+                  children: [
+                    // Row with lab name and popup menu
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            labName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16.0),
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == 'Delete') {
+                              // Delete the entire lab test
+                              labsRef?.doc(labName).delete();
+                            }
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              const PopupMenuItem(
+                                value: 'Delete',
+                                child: Text('Delete Lab Test'),
+                              ),
+                            ];
+                          },
+                        ),
+                      ],
+                    ),
+
+                    // Existing ExpansionTile and DataTable
+                    ExpansionTile(
+                      title: Text(
+                        'Results',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      children: [
+                        DataTable(
+                          columns: const [
+                            DataColumn(label: Text('Result')),
+                            DataColumn(label: Text('Date')),
+                            DataColumn(label: Text('Critical')),
+                            DataColumn(label: Text('Action')),
+                          ],
+                          rows: results.map<DataRow>((resultData) {
+                            final result = resultData['result'];
+                            final date =
+                                (resultData['date'] as Timestamp).toDate();
+                            final isCritical =
+                                resultData['isCritical'] ?? false;
+                            final int resultIndex = results.indexOf(resultData);
+
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(result.toString())),
+                                DataCell(Text(
+                                    '${date.day}-${date.month}-${date.year}')),
+                                DataCell(Text(isCritical ? 'Yes' : 'No')),
+                                DataCell(
+                                  Row(
+                                    children: [
+                                      PopupMenuButton<String>(
+                                        onSelected: (value) {
+                                          if (value == 'Edit') {
+                                            _editLabResult(
+                                                labName, results, resultIndex);
+                                          } else if (value == 'Delete') {
+                                            _deleteLabResult(
+                                                labName, results, resultIndex);
+                                          }
+                                        },
+                                        itemBuilder: (BuildContext context) {
+                                          return [
+                                            const PopupMenuItem(
+                                              value: 'Edit',
+                                              child: Text('Edit Result'),
+                                            ),
+                                            const PopupMenuItem(
+                                              value: 'Delete',
+                                              child: Text('Delete Result'),
+                                            ),
+                                          ];
+                                        },
+                                        child: const Icon(Icons.more_vert),
+                                      ),
+
+                                      // Action Taken only for Critical Results
+                                      if (isCritical) ...[
+                                        const SizedBox(width: 10),
+                                        GestureDetector(
+                                          onTap: () {
+                                            _editActionTaken(resultData,
+                                                labName, resultIndex);
+                                          },
+                                          child: Text(
+                                            resultData['actionTaken']
+                                                        ?.isNotEmpty ==
+                                                    true
+                                                ? resultData['actionTaken']
+                                                : 'Add Action',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
         },
       ),
     );
