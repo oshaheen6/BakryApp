@@ -32,7 +32,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             itemBuilder: (context, index) {
               final user = users[index];
               return ListTile(
-                title: Text(user['email'] ?? 'Unknown'),
+                title: Text(user['username'] ?? 'Unknown'),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

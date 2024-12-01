@@ -11,12 +11,13 @@ class DepartmentSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final units = userProvider.units ?? []; // Default to an empty list if null
+    final units = userProvider.units ?? [];
     final permission = userProvider.permission ?? '';
+    final username = userProvider.username ?? 'User';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Welcome, ${userProvider.username ?? 'User'}'),
+        title: Text('Welcome, ${username}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

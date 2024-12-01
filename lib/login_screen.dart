@@ -38,11 +38,16 @@ class _LoginScreenState extends State<LoginScreen> {
         userProvider.setJobTitle(userData['jobTitle'] ?? '');
         userProvider.setUnits(List<String>.from(userData['unit'] ?? []));
 
+        // Save data in SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
         await prefs.setInt(
             'loginTimestamp', DateTime.now().millisecondsSinceEpoch);
         await prefs.setString('username', userCredential.user?.email ?? '');
+        await prefs.setString('permission', userData['permission'] ?? '');
+        await prefs.setString('jobTitle', userData['jobTitle'] ?? '');
+        await prefs.setStringList(
+            'units', List<String>.from(userData['unit'] ?? []));
 
         return null; // Successful login
       } else {
