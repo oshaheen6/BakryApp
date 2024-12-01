@@ -18,136 +18,136 @@ class _LabsScreenState extends State<LabsScreen> {
     'CBC': [
       {
         'name': 'RBC',
-        'NICU': [135, 145],
-        'PICU': [135, 145]
+        'NICU': [4.1, 5.7], // million/μL
+        'PICU': [4.5, 5.9]
       },
       {
         'name': 'Hb',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [14, 20], // g/dL
+        'PICU': [11.5, 15.5]
       },
       {
         'name': 'WBC',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [9, 30], // 10^3/μL
+        'PICU': [4.5, 11]
       },
       {
         'name': 'Plt',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [150, 450], // 10^3/μL
+        'PICU': [150, 400]
       },
       {
         'name': 'Staff',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [0, 5], // %
+        'PICU': [0, 5]
       },
       {
         'name': 'Seg',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [40, 70], // %
+        'PICU': [40, 70]
       },
       {
         'name': 'Retics',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [3, 7], // %
+        'PICU': [0.5, 1.5]
       },
     ],
     'Electrolytes': [
       {
         'name': 'Na',
-        'NICU': [135, 145],
+        'NICU': [135, 145], // mmol/L
         'PICU': [135, 145]
       },
       {
         'name': 'K',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [3.5, 6], // mmol/L
+        'PICU': [3.5, 5]
       },
       {
         'name': 'Ca+',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [8.5, 10.5], // mg/dL
+        'PICU': [8.5, 10.5]
       },
       {
         'name': 'Ion Ca++',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [1.1, 1.3], // mmol/L
+        'PICU': [1.1, 1.3]
       },
       {
         'name': 'Mg',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [1.6, 2.4], // mg/dL
+        'PICU': [1.6, 2.4]
       },
       {
         'name': 'Ph',
-        'NICU': [3.5, 6],
-        'PICU': [3.5, 6]
+        'NICU': [4.5, 7.5], // mg/dL
+        'PICU': [3, 4.5]
       },
     ],
     'Liver Function': [
       {
         'name': 'ALT',
-        'NICU': [10, 40],
+        'NICU': [5, 25], // U/L
         'PICU': [10, 40]
       },
       {
         'name': 'AST',
-        'NICU': [10, 40],
+        'NICU': [15, 45], // U/L
         'PICU': [10, 40]
       },
       {
         'name': 'Bilirubin',
-        'NICU': [10, 40],
-        'PICU': [10, 40]
+        'NICU': [0.1, 1], // mg/dL
+        'PICU': [0.1, 1.2]
       },
       {
         'name': 'T.Bilirubin',
-        'NICU': [10, 40],
-        'PICU': [10, 40]
+        'NICU': [0.1, 12], // mg/dL (neonatal range)
+        'PICU': [0.1, 1.2]
       },
     ],
     'Kidney Function': [
       {
         'name': 'Creatinine',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [0.2, 0.9], // mg/dL
+        'PICU': [0.5, 1.2]
       },
       {
         'name': 'Urea',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [7, 20], // mg/dL
+        'PICU': [8, 25]
       },
       {
         'name': 'BUN',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [2.5, 7.1], // mmol/L
+        'PICU': [2.5, 6.4]
       },
     ],
     'Clotting': [
       {
         'name': 'PT',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [11, 13.5], // seconds
+        'PICU': [11, 13.5]
       },
       {
         'name': 'PTT',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [25, 35], // seconds
+        'PICU': [25, 35]
       },
       {
         'name': 'APTT',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [30, 40], // seconds
+        'PICU': [30, 40]
       },
       {
         'name': 'Fibrinogen',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [150, 400], // mg/dL
+        'PICU': [150, 400]
       },
       {
         'name': 'INR',
-        'NICU': [0.2, 0.9],
-        'PICU': [0.2, 0.9]
+        'NICU': [0.8, 1.2], // ratio
+        'PICU': [0.8, 1.2]
       },
     ],
   };
