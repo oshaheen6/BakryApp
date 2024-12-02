@@ -1,4 +1,6 @@
 import 'package:bakryapp/comment_section.dart';
+import 'package:bakryapp/provider/user_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,6 +14,7 @@ class NotesTodoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userName = Provider.of<UserProvider>(context).username;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notes & Todo'),
@@ -25,10 +28,10 @@ class NotesTodoScreen extends StatelessWidget {
               child: ListView(
                 children: [
                   _buildSectionTitle(context, 'Notes'),
-                  _buildNotesList(context),
+                  _buildNotesList(context, userName),
                   const SizedBox(height: 20),
                   _buildSectionTitle(context, 'Todos'),
-                  _buildTodosList(context),
+                  _buildTodosList(context, userName),
                 ],
               ),
             ),
@@ -59,7 +62,7 @@ class NotesTodoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNotesList(BuildContext context) {
+  Widget _buildNotesList(BuildContext context, String? userName) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('departments')
@@ -81,14 +84,18 @@ class NotesTodoScreen extends StatelessWidget {
           itemCount: notes.length,
           itemBuilder: (context, index) {
             var note = notes[index];
-            return _buildNoteCard(context, note);
+            return _buildNoteCard(context, note, userName);
           },
         );
       },
     );
   }
 
-  Widget _buildNoteCard(BuildContext context, QueryDocumentSnapshot note) {
+  Widget _buildNoteCard(
+      BuildContext context, QueryDocumentSnapshot note, String? userName) {
+    final String userName =
+        'yourUserNameHere'; // Replace with actual username logic
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       elevation: 3,
@@ -112,9 +119,28 @@ class NotesTodoScreen extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.thumb_up),
-                  color: Colors.blue,
-                  onPressed: () => _toggleLike(note, 'notes'),
+                  icon: FutureBuilder<DocumentSnapshot>(
+                    future: note.reference.get(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Icon(Icons.thumb_up_off_alt);
+                      }
+
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      final List<dynamic> likedBy = data['likedBy'] ?? [];
+
+                      return Icon(
+                        likedBy.contains(userName)
+                            ? Icons.thumb_up
+                            : Icons.thumb_up_off_alt,
+                        color: likedBy.contains(userName)
+                            ? Colors.blue
+                            : Colors.grey,
+                      );
+                    },
+                  ),
+                  onPressed: () => _toggleLike(note, 'notes', userName),
                 ),
                 Text(
                   '${(note.data() as Map<String, dynamic>)['likes'] ?? 0} likes',
@@ -133,7 +159,7 @@ class NotesTodoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTodosList(BuildContext context) {
+  Widget _buildTodosList(BuildContext context, String? userName) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('departments')
@@ -155,14 +181,15 @@ class NotesTodoScreen extends StatelessWidget {
           itemCount: todos.length,
           itemBuilder: (context, index) {
             var todo = todos[index];
-            return _buildTodoCard(context, todo);
+            return _buildTodoCard(context, todo, userName);
           },
         );
       },
     );
   }
 
-  Widget _buildTodoCard(BuildContext context, QueryDocumentSnapshot todo) {
+  Widget _buildTodoCard(
+      BuildContext context, QueryDocumentSnapshot todo, userName) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       elevation: 3,
@@ -187,9 +214,28 @@ class NotesTodoScreen extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.thumb_up),
-                  color: Colors.blue,
-                  onPressed: () => _toggleLike(todo, 'todos'),
+                  icon: FutureBuilder<DocumentSnapshot>(
+                    future: todo.reference.get(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Icon(Icons.thumb_up_off_alt);
+                      }
+
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      final List<dynamic> likedBy = data['likedBy'] ?? [];
+
+                      return Icon(
+                        likedBy.contains(userName)
+                            ? Icons.thumb_up
+                            : Icons.thumb_up_off_alt,
+                        color: likedBy.contains(userName)
+                            ? Colors.blue
+                            : Colors.grey,
+                      );
+                    },
+                  ),
+                  onPressed: () => _toggleLike(todo, 'todos', userName),
                 ),
                 Text(
                   '${todo['likes'] ?? 0} likes',
@@ -208,7 +254,8 @@ class NotesTodoScreen extends StatelessWidget {
     );
   }
 
-  void _toggleLike(QueryDocumentSnapshot doc, String collectionName) async {
+  void _toggleLike(QueryDocumentSnapshot doc, String collectionName,
+      String? userName) async {
     final docRef = _firestore
         .collection('departments')
         .doc(theDepartment)
@@ -220,8 +267,17 @@ class NotesTodoScreen extends StatelessWidget {
     await docRef.get().then((docSnapshot) {
       if (docSnapshot.exists) {
         final data = docSnapshot.data() as Map<String, dynamic>;
-        final likes = data['likes'] ?? 0;
-        docRef.update({'likes': likes + 1});
+        final List<dynamic> likedBy = data['likedBy'] ?? [];
+
+        if (likedBy.contains(userName)) {
+          // Unlike: Remove user from likedBy
+          likedBy.remove(userName);
+        } else {
+          // Like: Add user to likedBy
+          likedBy.add(userName);
+        }
+
+        docRef.update({'likedBy': likedBy, 'likes': likedBy.length});
       }
     });
   }
@@ -306,41 +362,19 @@ class NotesTodoScreen extends StatelessWidget {
 
   void _showCommentsDialog(
       String docId, String collectionName, BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 500), // Set a max height
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Comments',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueAccent,
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: CommentsSection(
-                  department: '', // Pass the department if necessary
-                  patientId: patientId,
-                  docId: docId,
-                  collectionName: collectionName,
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: CommentsSection(
+          department: theDepartment,
+          patientId: patientId,
+          docId: docId,
+          collectionName: collectionName,
         ),
       ),
     );

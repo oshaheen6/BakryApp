@@ -504,9 +504,9 @@ class _LabsScreenState extends State<LabsScreen> {
 
                     // Existing ExpansionTile and DataTable
                     ExpansionTile(
-                      title: Text(
+                      title: const Text(
                         'Results',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       children: [
                         DataTable(

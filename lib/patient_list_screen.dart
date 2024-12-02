@@ -1,4 +1,5 @@
 import 'package:bakryapp/patient_info_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bakryapp/all_medication.dart';
@@ -59,24 +60,10 @@ class PatientListScreen extends StatelessWidget {
           'postnatalAge': '$postnatalAge days',
         };
       } catch (e) {
-        print('Error calculating ages: $e');
-        return {'gestationAge': 'N/A', 'postnatalAge': 'Error calculating age'};
-      }
-    }
-
-    Future<void> fetchAndCalculateAges() async {
-      final querySnapshot = await patientsRef.get();
-      print('Fetched ${querySnapshot.docs.length} patients');
-
-      for (final patient in querySnapshot.docs) {
-        try {
-          final ages = await calculateAges(patient);
-          print('Patient ${patient.id}:');
-          print('Gestation Age: ${ages['gestationAge']} days');
-          print('Postnatal Age: ${ages['postnatalAge']} days');
-        } catch (e) {
-          print('Error calculating ages for patient ${patient.id}: $e');
+        if (kDebugMode) {
+          print('Error calculating ages: $e');
         }
+        return {'gestationAge': 'N/A', 'postnatalAge': 'Error calculating age'};
       }
     }
     // The rest of your widget's build method remains the same...

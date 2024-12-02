@@ -17,7 +17,7 @@ class DepartmentSelectionScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Welcome, ${username}'),
+        title: Text('Welcome, $username'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

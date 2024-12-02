@@ -13,7 +13,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _usernameController = TextEditingController();
 
   String? _selectedJobTitle;
-  List<String> _selectedUnits = [];
+  final List<String> _selectedUnits = [];
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
