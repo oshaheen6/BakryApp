@@ -49,6 +49,20 @@ class NotesTodoScreen extends StatelessWidget {
     );
   }
 
+  Future<int> _getCommentCount(String noteId, String collection) async {
+    final commentSnapshot = await _firestore
+        .collection('departments')
+        .doc(theDepartment)
+        .collection('patients')
+        .doc(patientId)
+        .collection(collection)
+        .doc(noteId)
+        .collection('comments')
+        .get();
+
+    return commentSnapshot.size; // Returns the number of comments
+  }
+
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -93,9 +107,6 @@ class NotesTodoScreen extends StatelessWidget {
 
   Widget _buildNoteCard(
       BuildContext context, QueryDocumentSnapshot note, String? userName) {
-    final String userName =
-        'yourUserNameHere'; // Replace with actual username logic
-
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       elevation: 3,
@@ -146,10 +157,23 @@ class NotesTodoScreen extends StatelessWidget {
                   '${(note.data() as Map<String, dynamic>)['likes'] ?? 0} likes',
                 ),
                 const Spacer(),
-                TextButton(
-                  child: const Text("Comments"),
-                  onPressed: () =>
-                      _showCommentsDialog(note.id, 'notes', context),
+                FutureBuilder<int>(
+                  future: _getCommentCount(
+                      note.id, "notes"), // Get the number of comments
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+                    if (snapshot.hasData) {
+                      return TextButton(
+                        child: Text(
+                            "${snapshot.data} Comments"), // Display the comment count
+                        onPressed: () =>
+                            _showCommentsDialog(note.id, 'notes', context),
+                      );
+                    }
+                    return const SizedBox(); // Handle error or empty state
+                  },
                 ),
               ],
             ),
@@ -241,10 +265,23 @@ class NotesTodoScreen extends StatelessWidget {
                   '${todo['likes'] ?? 0} likes',
                 ),
                 const Spacer(),
-                TextButton(
-                  child: const Text("Comments"),
-                  onPressed: () =>
-                      _showCommentsDialog(todo.id, 'todos', context),
+                FutureBuilder<int>(
+                  future: _getCommentCount(
+                      todo.id, "todos"), // Get the number of comments
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+                    if (snapshot.hasData) {
+                      return TextButton(
+                        child: Text(
+                            "${snapshot.data} Comments"), // Display the comment count
+                        onPressed: () =>
+                            _showCommentsDialog(todo.id, 'todos', context),
+                      );
+                    }
+                    return const SizedBox(); // Handle error or empty state
+                  },
                 ),
               ],
             ),

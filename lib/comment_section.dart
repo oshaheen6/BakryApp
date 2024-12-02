@@ -1,3 +1,6 @@
+import 'package:bakryapp/jobs_icon.dart';
+import 'package:bakryapp/provider/user_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -18,11 +21,14 @@ class CommentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userName = Provider.of<UserProvider>(context).username;
     return Column(
       children: [
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: _firestore
+                .collection('departments')
+                .doc(department)
                 .collection('patients')
                 .doc(patientId)
                 .collection(collectionName)
@@ -40,27 +46,22 @@ class CommentsSection extends StatelessWidget {
                 itemCount: comments.length,
                 itemBuilder: (context, index) {
                   var comment = comments[index];
-                  return _buildCommentCard(context, comment);
+                  return _buildCommentCard(context, comment, userName);
                 },
               );
             },
           ),
         ),
-        _buildAddCommentField(context),
+        _buildAddCommentField(context, userName!, docId),
       ],
     );
   }
 
   Widget _buildCommentCard(
-      BuildContext context, QueryDocumentSnapshot comment) {
+      BuildContext context, QueryDocumentSnapshot comment, String? userName) {
     return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: comment['profilePictureUrl'] != null
-            ? NetworkImage(comment['profilePictureUrl'])
-            : null,
-        child: comment['profilePictureUrl'] == null ? Icon(Icons.person) : null,
-      ),
-      title: Text(comment['username']),
+      leading: const CircleAvatar(radius: 25, child: JobTitleIcon(size: 45.0)),
+      title: Text(userName!),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -75,7 +76,7 @@ class CommentsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildAddCommentField(BuildContext context) {
+  Widget _buildAddCommentField(BuildContext context, String userName, doc) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Row(
@@ -92,10 +93,11 @@ class CommentsSection extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.send, color: Colors.blueAccent),
+            icon: const Icon(Icons.send, color: Colors.blueAccent),
             onPressed: () {
               if (_commentController.text.isNotEmpty) {
-                _addCommentToFirestore(_commentController.text);
+                _addCommentToFirestore(
+                    _commentController.text, userName, collectionName, doc);
                 _commentController.clear();
               }
             },
@@ -105,23 +107,24 @@ class CommentsSection extends StatelessWidget {
     );
   }
 
-  void _addCommentToFirestore(String commentText) {
+  void _addCommentToFirestore(
+      String commentText, String userName, String collectionName, String doc) {
     _firestore
+        .collection('departments')
+        .doc(department)
         .collection('patients')
         .doc(patientId)
         .collection(collectionName)
-        .doc(docId)
+        .doc(doc)
         .collection('comments')
         .add({
-      'username': 'User Name', // Replace with actual user name
+      'username': userName,
       'commentText': commentText,
       'dateCreated': DateTime.now().toIso8601String(),
-      'profilePictureUrl':
-          'https://example.com/user_profile.jpg', // Replace with user's profile URL if available
     });
   }
 
   String _formatTimestamp(String date) {
-    return date; // Implement formatting if needed
+    return date;
   }
 }

@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Save data in UserProvider
         final userProvider = Provider.of<UserProvider>(context, listen: false);
-        userProvider.setUsername(userCredential.user?.email ?? '');
+        userProvider.setUsername(userData['username'] ?? '');
         userProvider.setPermission(userData['permission'] ?? '');
         userProvider.setJobTitle(userData['jobTitle'] ?? '');
         userProvider.setUnits(List<String>.from(userData['unit'] ?? []));
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setBool('isLoggedIn', true);
         await prefs.setInt(
             'loginTimestamp', DateTime.now().millisecondsSinceEpoch);
-        await prefs.setString('username', userCredential.user?.email ?? '');
+        await prefs.setString('username', userData['username'] ?? '');
         await prefs.setString('permission', userData['permission'] ?? '');
         await prefs.setString('jobTitle', userData['jobTitle'] ?? '');
         await prefs.setStringList(

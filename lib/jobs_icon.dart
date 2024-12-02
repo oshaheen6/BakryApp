@@ -14,10 +14,10 @@ class JobTitleIcon extends StatelessWidget {
 
     // Map job titles to corresponding PNG paths
     final jobTitleIcons = {
-      'Clinical Pharmacist': 'assets/images/clinical_pharmacist.png',
-      'IV Pharmacist': 'assets/images/iv_pharmacist.png',
-      'Doctor': 'assets/images/doctor.png',
-      'TPN': 'assets/images/tpn.png',
+      'Clinical Pharmacist': 'assets/images/clinical pharmacist.png',
+      'IV Pharmacist': 'assets/images/IV.png',
+      'Doctor': 'assets/images/Doctor.png',
+      'TPN': 'assets/images/TPN.png',
     };
 
     // Get the image path based on the job title
@@ -33,12 +33,6 @@ class JobTitleIcon extends StatelessWidget {
             height: size,
             fit: BoxFit.cover,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          jobTitle ?? 'Unknown',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
         ),
       ],
     );

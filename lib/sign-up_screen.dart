@@ -22,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'Clinical Pharmacist',
     'Physician',
     'IV Pharmacist',
+    'TPN'
   ];
 
   final List<String> _units = [
