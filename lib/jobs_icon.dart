@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 class JobTitleIcon extends StatelessWidget {
   final double size; // Size of the circular image
 
-  const JobTitleIcon({Key? key, this.size = 50.0}) : super(key: key);
+  const JobTitleIcon({super.key, this.size = 50.0});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,9 @@ class JobTitleIcon extends StatelessWidget {
     final jobTitleIcons = {
       'Clinical Pharmacist': 'assets/images/clinical pharmacist.png',
       'IV Pharmacist': 'assets/images/IV.png',
-      'Doctor': 'assets/images/Doctor.png',
+      'Specialist': 'assets/images/specialist.png',
+      'Physician': 'assets/images/doctor.png',
+      'Admin': 'assets/images/admin.png',
       'TPN': 'assets/images/TPN.png',
     };
 

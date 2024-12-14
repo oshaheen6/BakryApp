@@ -20,6 +20,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   final List<String> _jobTitles = [
     'Clinical Pharmacist',
+    'Specialist',
     'Physician',
     'IV Pharmacist',
     'TPN'

@@ -217,7 +217,7 @@ class _LabsScreenState extends State<LabsScreen> {
     });
   }
 
-  Future<void> _showLabTestSelection() async {
+  Future<void> _showLabTestSelection(String? department) async {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -230,7 +230,7 @@ class _LabsScreenState extends State<LabsScreen> {
                   title: Text(lab['name']),
                   onTap: () {
                     Navigator.pop(context);
-                    _addNewLabTest(lab['name'], lab);
+                    _addNewLabTest(department!, lab['name'], lab);
                   },
                 );
               }).toList(),
@@ -241,26 +241,25 @@ class _LabsScreenState extends State<LabsScreen> {
     );
   }
 
-  Future<void> _addNewLabTest(
-      String labName, Map<String, dynamic> labDetails) async {
+  Future<void> _addNewLabTest(String department, String labName,
+      Map<String, dynamic> labDetails) async {
     double result = 0;
     bool isCritical = false;
+    DateTime selectedDate = DateTime.now(); // Default to today
 
-    // Retrieve the ranges for NICU and PICU
-    final ranges = labCategories.values
+    // Retrieve the ranges for the selected department (NICU or PICU)
+    final lab = labCategories.values
         .expand((category) => category)
         .firstWhere((lab) => lab['name'] == labName);
+    final range = lab[department]; // Get the range for the selected department
 
     await showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Determine if the result is within NICU or PICU ranges
-            bool isWithinNICURange =
-                result >= ranges['NICU'][0] && result <= ranges['NICU'][1];
-            bool isWithinPICURange =
-                result >= ranges['PICU'][0] && result <= ranges['PICU'][1];
+            // Check if the result is within the normal range for the department
+            bool isWithinRange = result >= range[0] && result <= range[1];
 
             return AlertDialog(
               title: Text('Add $labName Test'),
@@ -272,25 +271,49 @@ class _LabsScreenState extends State<LabsScreen> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       result = double.tryParse(value) ?? 0;
-                      setState(() {}); // Update the dialog with new result
+                      setState(() {}); // Update the dialog with the new result
                     },
                   ),
                   const SizedBox(height: 10),
                   if (result > 0) ...[
                     Text(
-                      isWithinNICURange
-                          ? 'Result is within normal range.'
-                          : isWithinPICURange
-                              ? 'Result is within normal range.'
-                              : 'Result is outside normal ranges.',
+                      isWithinRange
+                          ? 'Result is within normal range for $department.'
+                          : 'Result is outside normal range for $department.',
                       style: TextStyle(
-                        color: isWithinNICURange || isWithinPICURange
-                            ? Colors.green
-                            : Colors.red,
+                        color: isWithinRange ? Colors.green : Colors.red,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text('Date:'),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate:
+                                DateTime(2000), // Earliest selectable date
+                            lastDate: DateTime.now(), // Latest selectable date
+                          );
+                          if (pickedDate != null) {
+                            setState(() {
+                              selectedDate =
+                                  pickedDate; // Update the selected date
+                            });
+                          }
+                        },
+                        child: Text(
+                          "${selectedDate.toLocal()}"
+                              .split(' ')[0], // Show the date
+                        ),
+                      ),
+                    ],
+                  ),
                   CheckboxListTile(
                     title: const Text('Mark as Critical'),
                     value: isCritical,
@@ -314,7 +337,7 @@ class _LabsScreenState extends State<LabsScreen> {
                       'results': FieldValue.arrayUnion([
                         {
                           'result': result,
-                          'date': DateTime.now(),
+                          'date': selectedDate, // Use the selected date
                           'isCritical': isCritical,
                           'actionTaken': '',
                         }
@@ -420,6 +443,7 @@ class _LabsScreenState extends State<LabsScreen> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final department = userProvider.department;
+
     labsRef = FirebaseFirestore.instance
         .collection('departments')
         .doc(department) // Adjust to be dynamic if needed
@@ -432,7 +456,9 @@ class _LabsScreenState extends State<LabsScreen> {
         title: const Text('Lab Results'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showLabTestSelection,
+        onPressed: () {
+          _showLabTestSelection(department);
+        },
         child: const Icon(Icons.add),
       ),
       body: StreamBuilder<QuerySnapshot>(

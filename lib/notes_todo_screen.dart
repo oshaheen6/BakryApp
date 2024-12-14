@@ -2,6 +2,7 @@ import 'package:bakryapp/comment_section.dart';
 import 'package:bakryapp/provider/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NotesTodoScreen extends StatelessWidget {
@@ -60,7 +61,7 @@ class NotesTodoScreen extends StatelessWidget {
         .collection('comments')
         .get();
 
-    return commentSnapshot.size; // Returns the number of comments
+    return commentSnapshot.size;
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {
@@ -205,7 +206,7 @@ class NotesTodoScreen extends StatelessWidget {
           itemCount: todos.length,
           itemBuilder: (context, index) {
             var todo = todos[index];
-            return _buildTodoCard(context, todo, userName);
+            return _buildTodoCard(context, todo, userName!);
           },
         );
       },
@@ -213,7 +214,19 @@ class NotesTodoScreen extends StatelessWidget {
   }
 
   Widget _buildTodoCard(
-      BuildContext context, QueryDocumentSnapshot todo, userName) {
+      BuildContext context, QueryDocumentSnapshot todo, String userName) {
+    final Map<String, dynamic>? todoData = todo.data() as Map<String, dynamic>?;
+
+    // Safely retrieve and format the `dateCreated` field
+    final String createdOn = todoData?['dateCreated'] is Timestamp
+        ? 'Accomplished on: ${formatDate(todoData!['dateCreated'] as Timestamp)} by $userName'
+        : '';
+
+    // Safely retrieve and format the `dateAccomplished` field
+    final String accomplishedOn = todoData?['dateAccomplished'] is Timestamp
+        ? ' ${formatDate(todoData!['dateAccomplished'] as Timestamp)}'
+        : 'Accomplished on: Not yet accomplished';
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       elevation: 3,
@@ -225,13 +238,25 @@ class NotesTodoScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              todo['todoContent'],
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    todoData?['todoContent'] ?? 'No content',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Checkbox(
+                  value: todoData?['accomplished'] ?? false,
+                  onChanged: (value) =>
+                      _toggleAccomplished(todo.reference, value),
+                ),
+              ],
             ),
             Text(
-              'Created on: ${todo['dateCreated']}\n'
-              'Accomplished on: ${todo['dateAccomplished'] ?? 'Not yet accomplished'}',
+              'Created on: $createdOn\n$accomplishedOn',
               style: TextStyle(color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
@@ -266,21 +291,19 @@ class NotesTodoScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 FutureBuilder<int>(
-                  future: _getCommentCount(
-                      todo.id, "todos"), // Get the number of comments
+                  future: _getCommentCount(todo.id, "todos"),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const CircularProgressIndicator();
                     }
                     if (snapshot.hasData) {
                       return TextButton(
-                        child: Text(
-                            "${snapshot.data} Comments"), // Display the comment count
+                        child: Text("${snapshot.data} Comments"),
                         onPressed: () =>
                             _showCommentsDialog(todo.id, 'todos', context),
                       );
                     }
-                    return const SizedBox(); // Handle error or empty state
+                    return const SizedBox();
                   },
                 ),
               ],
@@ -289,6 +312,15 @@ class NotesTodoScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _toggleAccomplished(DocumentReference todoRef, bool? isAccomplished) {
+    todoRef.update({
+      'accomplished': isAccomplished,
+      'dateAccomplished': isAccomplished == true
+          ? FieldValue.serverTimestamp()
+          : null, // Set to current date or null
+    });
   }
 
   void _toggleLike(QueryDocumentSnapshot doc, String collectionName,
@@ -397,6 +429,11 @@ class NotesTodoScreen extends StatelessWidget {
     );
   }
 
+  String formatDate(Timestamp timestamp) {
+    final DateTime date = timestamp.toDate();
+    return DateFormat('dd MMM yyyy, hh:mm a').format(date);
+  }
+
   void _showCommentsDialog(
       String docId, String collectionName, BuildContext context) {
     showModalBottomSheet(
@@ -418,6 +455,8 @@ class NotesTodoScreen extends StatelessWidget {
   }
 
   void _addNoteToFirestore(String noteContent) {
+    DateTime dateTime = DateTime.now();
+    String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format((dateTime));
     _firestore
         .collection('departments')
         .doc(theDepartment)
@@ -426,7 +465,7 @@ class NotesTodoScreen extends StatelessWidget {
         .collection('notes')
         .add({
       'noteContent': noteContent,
-      'dateCreated': DateTime.now().toIso8601String(),
+      'dateCreated': formattedDate,
       'likes': 0,
     });
   }
@@ -440,7 +479,7 @@ class NotesTodoScreen extends StatelessWidget {
         .collection('todos')
         .add({
       'todoContent': todoContent,
-      'dateCreated': DateTime.now().toIso8601String(),
+      'dateCreated': FieldValue.serverTimestamp(),
       'dateAccomplished': null,
       'likes': 0,
     });
