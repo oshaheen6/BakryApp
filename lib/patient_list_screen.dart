@@ -6,11 +6,64 @@ import 'package:bakryapp/all_medication.dart';
 import 'package:bakryapp/discharge_patients.dart';
 import 'package:bakryapp/labs_screen.dart';
 import 'package:bakryapp/notes_todo_screen.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:bakryapp/tpn_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '/provider/user_provider.dart';
 
-class PatientListScreen extends StatelessWidget {
+class PatientListScreen extends StatefulWidget {
+  @override
+  State<PatientListScreen> createState() => _PatientListScreenState();
+}
+
+class _PatientListScreenState extends State<PatientListScreen> {
+  String? formattedString;
+  @override
+  void initState() {
+    loadLastFetchedTime();
+    updateFetch();
+    super.initState();
+  }
+
+  Future<void> updateFetch() async {
+    try {
+      // Simulate fetching data from Firestore
+      var connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        // No internet connection; do not fetch or update
+        print('No internet connection. Using last fetched time.');
+        return;
+      }
+      await FirebaseFirestore.instance.collection('departments').get();
+
+      // Capture the actual fetch time
+      DateTime fetchTime = DateTime.now();
+      String formattedTime =
+          fetchTime.toString().split(' ')[1].substring(0, 5); // HH:mm
+      String formattedDate = fetchTime.toString().split(' ')[0]; // YYYY-MM-DD
+      formattedString = '$formattedDate $formattedTime';
+
+      // Save the formattedString to SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('lastFetchedTime', formattedString!);
+
+      // Update the UI
+      setState(() {});
+    } catch (e) {
+      print('Error fetching data: $e');
+    }
+  }
+
+  Future<void> loadLastFetchedTime() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      formattedString =
+          prefs.getString('lastFetchedTime') ?? 'No data fetched yet';
+      print(formattedString);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
@@ -20,62 +73,6 @@ class PatientListScreen extends StatelessWidget {
         .collection('departments')
         .doc(department)
         .collection('patients');
-
-    Future<Map<String, dynamic>> calculateAges(
-        QueryDocumentSnapshot patient) async {
-      try {
-        // Cast `data` to a Map
-        final Map<String, dynamic> patientData =
-            patient.data() as Map<String, dynamic>;
-
-        // Check if `Day of birth` exists
-        if (!patientData.containsKey('Day of birth')) {
-          return {
-            'gestationAge': 'N/A',
-            'postnatalAge': 'No birth day available'
-          };
-        }
-
-        // Retrieve `Day of birth` and `Gestational age`
-        final dob = patientData['Day of birth'];
-        final gestationWeeksAtBirth = patientData['Gestational age'] ?? 'N/A';
-
-        // Convert to DateTime if necessary
-        DateTime birthDate;
-        if (dob is Timestamp) {
-          birthDate = dob.toDate();
-        } else if (dob is String) {
-          // Parse the string to DateTime
-          birthDate = DateTime.parse(dob);
-        } else {
-          throw 'Unsupported `Day of birth` format';
-        }
-
-        // Calculate ages
-        final currentDate = DateTime.now();
-        final postnatalAge = currentDate.difference(birthDate).inDays;
-
-        return {
-          'gestationAge': gestationWeeksAtBirth,
-          'postnatalAge': '$postnatalAge days',
-        };
-      } catch (e) {
-        if (kDebugMode) {
-          print('Error calculating ages: $e');
-        }
-        return {'gestationAge': 'N/A', 'postnatalAge': 'Error calculating age'};
-      }
-    }
-    // The rest of your widget's build method remains the same...
-
-    String formattedTime = DateTime.now()
-        .toString()
-        .split(' ')[1]
-        .substring(0, 5); // Get hours:minutes
-
-    String formattedDate = DateTime.now().toString().split(' ')[0]; // Get date
-
-    String formattedString = ' $formattedDate $formattedTime';
 
     Future<bool> checkForTpnParameters(String patientId) async {
       final tpnRef = FirebaseFirestore.instance
@@ -142,46 +139,8 @@ class PatientListScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            patientName,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          FutureBuilder(
-                            future: calculateAges(patient),
-                            builder: (context,
-                                AsyncSnapshot<Map<String, dynamic>> snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Text('Calculating ages...');
-                              } else if (snapshot.hasError) {
-                                return const Text('Error calculating ages.');
-                              } else if (snapshot.hasData) {
-                                final ages = snapshot.data!;
-                                final postnatalAge = ages['postnatalAge'];
-                                final gestationAge = ages['gestationAge'];
-
-                                if (postnatalAge == 'No birth day available') {
-                                  return const Text('No birth day available');
-                                } else if (postnatalAge ==
-                                    'Error calculating age') {
-                                  return const Text('Error calculating age');
-                                } else {
-                                  return Text(
-                                    'Gestation Age: $gestationAge, Postnatal Age: $postnatalAge',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  );
-                                }
-                              } else {
-                                return const Text('Age data unavailable');
-                              }
-                            },
-                          ),
-                        ],
-                      ),
+                      child: AgeAndButtons(
+                          patientName: patientName, patient: patient),
                     ),
                     childrenPadding:
                         const EdgeInsets.symmetric(horizontal: 16.0),
@@ -375,6 +334,125 @@ class PatientListScreen extends StatelessWidget {
           }
         },
       ),
+    );
+  }
+}
+
+class AgeAndButtons extends StatelessWidget {
+  const AgeAndButtons({
+    super.key,
+    required this.patientName,
+    required this.patient,
+  });
+
+  Future<Map<String, dynamic>> calculateAges(
+      QueryDocumentSnapshot patient) async {
+    try {
+      // Cast `data` to a Map
+      final Map<String, dynamic> patientData =
+          patient.data() as Map<String, dynamic>;
+
+      // Check if `Day of birth` exists
+      if (!patientData.containsKey('Day of birth')) {
+        return {
+          'gestationAge': 'N/A',
+          'postnatalAge': 'No birth day available'
+        };
+      }
+
+      // Retrieve `Day of birth` and `Gestational age`
+      final dob = patientData['Day of birth'];
+      final gestationWeeksAtBirth = patientData['Gestational age'] ?? 'N/A';
+
+      // Convert to DateTime if necessary
+      DateTime birthDate;
+      if (dob is Timestamp) {
+        birthDate = dob.toDate();
+      } else if (dob is String) {
+        // Parse the string to DateTime
+        birthDate = DateTime.parse(dob);
+      } else {
+        throw 'Unsupported `Day of birth` format';
+      }
+
+      // Calculate ages
+      final currentDate = DateTime.now();
+      final postnatalAge = currentDate.difference(birthDate).inDays;
+
+      String getPostnatalAge(DateTime birthDate) {
+        final totalDays = postnatalAge;
+        if (totalDays < 30) {
+          return '$totalDays day${totalDays == 1 ? '' : 's'}';
+        }
+
+        final months = (totalDays / 30).floor();
+        final days = totalDays % 30;
+
+        if (months < 12) {
+          return '$months month${months == 1 ? '' : 's'}${days > 0 ? ' and $days day${days == 1 ? '' : 's'}' : ''}';
+        }
+
+        final years = (months / 12).floor();
+        final remainingMonths = months % 12;
+
+        return '$years year${years == 1 ? '' : 's'}'
+            '${remainingMonths > 0 ? ', $remainingMonths month${remainingMonths == 1 ? '' : 's'}' : ''}'
+            '${days > 0 ? ' and $days day${days == 1 ? '' : 's'}' : ''}';
+      }
+
+      return {
+        'gestationAge': gestationWeeksAtBirth,
+        'postnatalAge': getPostnatalAge(birthDate),
+      };
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error calculating ages: $e');
+      }
+      return {'gestationAge': 'N/A', 'postnatalAge': 'Error calculating age'};
+    }
+  }
+  // The rest of your widget's build method remains the same...
+
+  final dynamic patientName;
+  final QueryDocumentSnapshot<Object?> patient;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          patientName,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        FutureBuilder(
+          future: calculateAges(patient),
+          builder: (context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Text('Calculating ages...');
+            } else if (snapshot.hasError) {
+              return const Text('Error calculating ages.');
+            } else if (snapshot.hasData) {
+              final ages = snapshot.data!;
+              final postnatalAge = ages['postnatalAge'];
+              final gestationAge = ages['gestationAge'];
+
+              if (postnatalAge == 'No birth day available') {
+                return const Text('No birth day available');
+              } else if (postnatalAge == 'Error calculating age') {
+                return const Text('Error calculating age');
+              } else {
+                return Text(
+                  'Gestation Age: $gestationAge, Postnatal Age: $postnatalAge',
+                  style: Theme.of(context).textTheme.bodySmall,
+                );
+              }
+            } else {
+              return const Text('Age data unavailable');
+            }
+          },
+        ),
+      ],
     );
   }
 }
