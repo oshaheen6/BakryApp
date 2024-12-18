@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
     storageBucket: 'bakryexcel.firebasestorage.app',
-    iosBundleId: 'com.example.bakryapp',
+    iosBundleId: 'com.wayIV.bakryIV',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '789996709547',
     projectId: 'bakryexcel',
     storageBucket: 'bakryexcel.firebasestorage.app',
-    iosBundleId: 'com.example.bakryapp',
+    iosBundleId: 'com.wayIV.bakryIV',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'bakryexcel.firebasestorage.app',
     measurementId: 'G-5TE7ZH3MH6',
   );
-
 }

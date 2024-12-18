@@ -1,6 +1,9 @@
 import 'package:bakryapp/department_screen.dart';
+import 'package:bakryapp/provider/drug_monograph_hive.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'package:bakryapp/login_screen.dart';
@@ -11,10 +14,16 @@ import 'provider/user_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Hive.initFlutter();
+  Hive.registerAdapter(DrugMonographAdapter());
+  final drugMonographBox = await Hive.openBox<DrugMonograph>('DrugMonograph');
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        Provider<Box<DrugMonograph>>.value(
+          value: drugMonographBox,
+        )
       ],
       child: const MyApp(),
     ),
@@ -26,7 +35,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SplashScreen(),
     );
@@ -34,6 +43,8 @@ class MyApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -50,51 +61,59 @@ class _SplashScreenState extends State<SplashScreen> {
     var connectivityResult = await Connectivity().checkConnectivity();
     bool hasConnection = connectivityResult != ConnectivityResult.none;
 
-    // Check if user is logged in by checking SharedPreferences
+    // Access SharedPreferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn =
-        prefs.getBool('isLoggedIn') ?? false; // Default to false if not found
+
+    // Restore user data into UserProvider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await _restoreUserProvider(userProvider);
+
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     int? loginTimestamp = prefs.getInt('loginTimestamp');
 
     if (isLoggedIn && loginTimestamp != null) {
-      // Check if the login timestamp is within the allowed period (2 days in milliseconds)
-      const int expirationPeriod =
-          2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+      // Check if login is still valid (2 days in milliseconds)
+      const int expirationPeriod = 2 * 24 * 60 * 60 * 1000;
       final int currentTime = DateTime.now().millisecondsSinceEpoch;
 
-      // If the time difference is greater than the expiration period, consider login expired
       if ((currentTime - loginTimestamp) > expirationPeriod) {
         prefs.remove('isLoggedIn');
         prefs.remove('loginTimestamp');
-        isLoggedIn = false; // Set to false to show the login screen
+        isLoggedIn = false; // Mark login as expired
       }
     }
 
-    // If there's no internet connection and the user has logged in before, go to the DepartmentSelectionScreen
+    // Navigate based on login state and connectivity
     if (!hasConnection && isLoggedIn) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => DepartmentSelectionScreen()),
       );
-    }
-    // If user is logged in, navigate to DepartmentSelectionScreen
-    else if (isLoggedIn) {
+    } else if (isLoggedIn) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => DepartmentSelectionScreen()),
       );
-    }
-    // If no user is logged in, show the LoginScreen
-    else {
+    } else {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => LoginScreen()),
       );
     }
   }
 
+  Future<void> _restoreUserProvider(UserProvider userProvider) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    userProvider.setUsername(prefs.getString('username') ?? '');
+    userProvider.setPermission(prefs.getString('permission') ?? '');
+    userProvider.setJobTitle(prefs.getString('jobTitle') ?? '');
+    userProvider.setUnits(prefs.getStringList('units') ?? []);
+  }
+
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-          child: CircularProgressIndicator()), // Show loading while checking
+        child: CircularProgressIndicator(), // Show loading indicator
+      ),
     );
   }
 }

@@ -3,3 +3,17 @@ final username = Provider.of<UserProvider>(context).username;
 
 
 Provider.of<UserProvider>(context, listen: false).setDepartment('NICU');
+
+
+in bakry
+fix the patientID in iv room
+and tpn daily entires
+
+
+normal values
+signup button
+drug monograph complete
+Gestational age and postnatal age
+all medication
+discharge patients
+users name and comments
