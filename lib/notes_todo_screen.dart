@@ -442,15 +442,33 @@ class NotesTodoScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
       ),
       isScrollControlled: true,
-      builder: (context) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.8,
-        child: CommentsSection(
-          department: theDepartment,
-          patientId: patientId,
-          docId: docId,
-          collectionName: collectionName,
-        ),
-      ),
+      builder: (context) {
+        return Padding(
+          // Adds padding to avoid overlapping with the keyboard
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.8, // Initial height of the sheet
+            minChildSize: 0.4, // Minimum height of the sheet
+            maxChildSize: 0.9, // Maximum height of the sheet
+            builder: (context, scrollController) => Column(
+              children: [
+                Expanded(
+                  child: CommentsSection(
+                    department: theDepartment,
+                    patientId: patientId,
+                    docId: docId,
+                    collectionName: collectionName,
+                    scrollController: scrollController,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

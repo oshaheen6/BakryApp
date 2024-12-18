@@ -9,6 +9,7 @@ class CommentsSection extends StatelessWidget {
   final String patientId;
   final String docId;
   final String collectionName;
+  final ScrollController scrollController;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _commentController = TextEditingController();
 
@@ -17,11 +18,13 @@ class CommentsSection extends StatelessWidget {
     required this.patientId,
     required this.docId,
     required this.collectionName,
+    required this.scrollController,
   });
 
   @override
   Widget build(BuildContext context) {
     final userName = Provider.of<UserProvider>(context).username;
+
     return Column(
       children: [
         Expanded(
@@ -42,7 +45,9 @@ class CommentsSection extends StatelessWidget {
               }
 
               final comments = snapshot.data!.docs;
+
               return ListView.builder(
+                controller: scrollController, // Ensures proper scroll behavior
                 itemCount: comments.length,
                 itemBuilder: (context, index) {
                   var comment = comments[index];
@@ -61,7 +66,7 @@ class CommentsSection extends StatelessWidget {
       BuildContext context, QueryDocumentSnapshot comment, String? userName) {
     return ListTile(
       leading: const CircleAvatar(radius: 25, child: JobTitleIcon(size: 45.0)),
-      title: Text(userName!),
+      title: Text(comment['username']),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -76,9 +81,10 @@ class CommentsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildAddCommentField(BuildContext context, String userName, doc) {
+  Widget _buildAddCommentField(
+      BuildContext context, String userName, String doc) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: Row(
         children: [
           Expanded(
