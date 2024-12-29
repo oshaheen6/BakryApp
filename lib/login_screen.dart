@@ -15,6 +15,21 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _verificationController = TextEditingController();
+  String? _generatedNumber; // Random number for physician verification
+  bool _isPhysician = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _generateAndSaveRandomNumber(); // Generate the random number on app start
+  }
+
+  Future<void> _generateAndSaveRandomNumber() async {
+    setState(() {
+      _generatedNumber = "123";
+    });
+  }
 
   Future<String?> _loginUser(BuildContext context, LoginData data) async {
     try {
@@ -30,6 +45,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userDoc.exists && userDoc.data()!['isApproved'] == true) {
         final userData = userDoc.data()!;
+
+        if (userData['jobTitle'] == 'Physician') {
+          _isPhysician = true;
+
+          if (_verificationController.text != _generatedNumber) {
+            return 'Invalid verification number. Please try again.';
+          }
+        }
 
         // Save data in UserProvider
         final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -80,9 +103,23 @@ class _LoginScreenState extends State<LoginScreen> {
             onRecoverPassword: _recoverPassword,
             onSubmitAnimationCompleted: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
-                builder: (context) => DepartmentSelectionScreen(),
+                builder: (context) => const DepartmentSelectionScreen(),
               ));
             },
+            additionalSignupFields: _isPhysician
+                ? [
+                    UserFormField(
+                      keyName: 'verificationNumber',
+                      displayName: 'Enter Hospital Verification Number',
+                      fieldValidator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter the verification number';
+                        }
+                        return null;
+                      },
+                    ),
+                  ]
+                : [],
             messages: LoginMessages(
               userHint: 'Email',
               passwordHint: 'Password',

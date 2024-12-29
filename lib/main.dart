@@ -1,5 +1,7 @@
 import 'package:bakryapp/department_screen.dart';
 import 'package:bakryapp/provider/drug_monograph_hive.dart';
+import 'package:bakryapp/provider/nicu_condition_hive.dart';
+import 'package:bakryapp/provider/picu_condition_hive.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive/hive.dart';
@@ -16,6 +18,8 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Hive.initFlutter();
   Hive.registerAdapter(DrugMonographAdapter());
+  Hive.registerAdapter(NICUDoseConditionAdapter());
+  Hive.registerAdapter(PICUDoseConditionAdapter());
   final drugMonographBox = await Hive.openBox<DrugMonograph>('DrugMonograph');
   runApp(
     MultiProvider(

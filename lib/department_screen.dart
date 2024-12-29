@@ -1,6 +1,9 @@
 import 'package:bakryapp/admin_screen.dart';
+import 'package:bakryapp/bilirubin_screen.dart';
+import 'package:bakryapp/calculator_screen.dart';
 import 'package:bakryapp/drugs_monograph.dart';
 import 'package:bakryapp/login_screen.dart';
+import 'package:bakryapp/pediatric_ward_screen.dart';
 import 'package:bakryapp/provider/drug_monograph_hive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive/hive.dart';
@@ -30,12 +33,29 @@ class _DepartmentSelectionScreenState extends State<DepartmentSelectionScreen> {
 
   Future<void> _initializeData() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastSyncTimestamp = prefs.getInt('lastSyncTimestamp') ?? 0;
+
+      // Check if the last sync was within the past 2 days (in milliseconds)
+      const twoDaysInMillis = 2 * 24 * 60 * 60 * 1000;
+      final currentTime = DateTime.now().millisecondsSinceEpoch;
+
+      if (currentTime - lastSyncTimestamp < twoDaysInMillis) {
+        // Skip syncing, as it was done recently
+        print("Sync skipped; last sync was within 2 days.");
+        return;
+      }
+
       setState(() {
         _isSyncing = true;
         _syncError = '';
       });
 
+      // Perform sync
       await _syncWithFirestore();
+
+      // Save the current timestamp as the last sync time
+      await prefs.setInt('lastSyncTimestamp', currentTime);
     } catch (e) {
       setState(() {
         _syncError = 'Failed to sync drug monographs: ${e.toString()}';
@@ -68,6 +88,13 @@ class _DepartmentSelectionScreenState extends State<DepartmentSelectionScreen> {
           genericName: doc.id,
           category: data['category'],
           aware: _parseAwareValue(data['aware']),
+          nicuDose: data['NICU_dose'],
+          renalAdjustmentNicu: data['renal_adjustment_NICU'],
+          picuAdverseEffect: data['PICU_adverse_effect'],
+          nicuAdverseEffect: data['NICU_adverse_effect'],
+          administration: data['Administration'],
+          stability: data['Stability'],
+          csf: data['CSF'],
         );
         await drugMonographBox.put(doc.id, drug);
       }
@@ -202,6 +229,50 @@ class _DepartmentSelectionScreenState extends State<DepartmentSelectionScreen> {
                     );
                   },
                 ),
+              const SizedBox(height: 20),
+              _buildDepartmentButton(
+                context,
+                title: 'Pediatric Ward',
+                color: Colors.orange,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PediatricWardScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildDepartmentButton(
+                context,
+                title: 'Calculators',
+                color: const Color.fromARGB(255, 231, 53, 163),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CalculatorsScreen(),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 20),
+              _buildDepartmentButton(
+                context,
+                title: 'Bilirubin',
+                color: const Color.fromARGB(255, 15, 161, 76),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ThresholdScreen(),
+                    ),
+                  );
+                },
+              ),
+
               const SizedBox(height: 120),
               // Drug Monographs Button
               _buildDepartmentButton(
