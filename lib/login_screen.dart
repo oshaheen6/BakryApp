@@ -1,5 +1,5 @@
-import 'package:bakryapp/department_screen.dart';
 import 'package:bakryapp/provider/user_provider.dart';
+import 'package:bakryapp/screen/department_screen.dart';
 import 'package:bakryapp/sign-up_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onRecoverPassword: _recoverPassword,
             onSubmitAnimationCompleted: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
-                builder: (context) => DepartmentSelectionScreen(),
+                builder: (context) => const DepartmentSelectionScreen(),
               ));
             },
             messages: LoginMessages(

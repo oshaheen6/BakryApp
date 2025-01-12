@@ -1,5 +1,7 @@
-import 'package:bakryapp/department_screen.dart';
 import 'package:bakryapp/provider/drug_monograph_hive.dart';
+import 'package:bakryapp/provider/nicu_condition_hive.dart';
+import 'package:bakryapp/provider/picu_condition_hive.dart';
+import 'package:bakryapp/screen/department_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive/hive.dart';
@@ -16,6 +18,8 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Hive.initFlutter();
   Hive.registerAdapter(DrugMonographAdapter());
+  Hive.registerAdapter(NICUDoseConditionAdapter());
+  Hive.registerAdapter(PICUDoseConditionAdapter());
   final drugMonographBox = await Hive.openBox<DrugMonograph>('DrugMonograph');
   runApp(
     MultiProvider(
@@ -86,11 +90,13 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigate based on login state and connectivity
     if (!hasConnection && isLoggedIn) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => DepartmentSelectionScreen()),
+        MaterialPageRoute(
+            builder: (context) => const DepartmentSelectionScreen()),
       );
     } else if (isLoggedIn) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => DepartmentSelectionScreen()),
+        MaterialPageRoute(
+            builder: (context) => const DepartmentSelectionScreen()),
       );
     } else {
       Navigator.of(context).pushReplacement(

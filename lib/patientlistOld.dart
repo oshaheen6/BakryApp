@@ -2,7 +2,7 @@ import 'package:bakryapp/patient_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bakryapp/all_medication.dart';
-import 'package:bakryapp/discharge_patients.dart';
+import 'package:bakryapp/screen/discharge_patients.dart';
 import 'package:bakryapp/labs_screen.dart';
 import 'package:bakryapp/notes_todo_screen.dart';
 import 'package:bakryapp/tpn_screen.dart';

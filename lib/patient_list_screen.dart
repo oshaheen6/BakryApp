@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bakryapp/all_medication.dart';
-import 'package:bakryapp/discharge_patients.dart';
+import 'package:bakryapp/screen/discharge_patients.dart';
 import 'package:bakryapp/labs_screen.dart';
 import 'package:bakryapp/notes_todo_screen.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -149,7 +149,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
                         alignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Text(
-                            'Fetched on: $formattedString',
+                            'Accessed on: $formattedString',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontStyle: FontStyle.italic,

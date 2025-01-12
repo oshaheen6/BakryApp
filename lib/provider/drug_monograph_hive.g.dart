@@ -24,13 +24,23 @@ class DrugMonographAdapter extends TypeAdapter<DrugMonograph> {
       finalConc: fields[5] as String,
       dilution: fields[6] as int,
       aware: fields[3] as String?,
+      nicuDose: fields[7] as String?,
+      unit: fields[8] as String?,
+      renalAdjustmentNicu: fields[9] as String?,
+      picuAdverseEffect: fields[10] as String?,
+      nicuAdverseEffect: fields[11] as String?,
+      administration: fields[12] as String?,
+      stability: fields[13] as String?,
+      csf: fields[14] as String?,
+      nicuConditions: (fields[15] as List?)?.cast<NICUDoseCondition>(),
+      picuConditions: (fields[16] as List?)?.cast<PICUDoseCondition>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, DrugMonograph obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +54,27 @@ class DrugMonographAdapter extends TypeAdapter<DrugMonograph> {
       ..writeByte(5)
       ..write(obj.finalConc)
       ..writeByte(6)
-      ..write(obj.dilution);
+      ..write(obj.dilution)
+      ..writeByte(7)
+      ..write(obj.nicuDose)
+      ..writeByte(8)
+      ..write(obj.unit)
+      ..writeByte(9)
+      ..write(obj.renalAdjustmentNicu)
+      ..writeByte(10)
+      ..write(obj.picuAdverseEffect)
+      ..writeByte(11)
+      ..write(obj.nicuAdverseEffect)
+      ..writeByte(12)
+      ..write(obj.administration)
+      ..writeByte(13)
+      ..write(obj.stability)
+      ..writeByte(14)
+      ..write(obj.csf)
+      ..writeByte(15)
+      ..write(obj.nicuConditions)
+      ..writeByte(16)
+      ..write(obj.picuConditions);
   }
 
   @override
